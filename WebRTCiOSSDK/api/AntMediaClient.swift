@@ -530,6 +530,39 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      1.0 means no zoom, 2.0 means 2x zoom, and so on.
      The method ensures the zoom does not exceed the camera’s limits.
      */
+    // Source: https://stackoverflow.com/a/42928452/14445061
+    public func didZoomingBegan(_ pinch: UIPinchGestureRecognizer) {
+        guard let streamId = publisherStreamId,
+              let stream = webRTCClientMap[streamId],
+              let device = stream.captureDevice else { return }
+        
+        // Return zoom value between the minimum and maximum zoom values
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat {
+            return min(min(max(factor, stream.minimumZoom), stream.maximumZoom), device.activeFormat.videoMaxZoomFactor)
+        }
+        
+        func update(scale factor: CGFloat) {
+            do {
+                try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                device.videoZoomFactor = factor
+            } catch {
+                print("\(error.localizedDescription)")
+            }
+        }
+        
+        let newScaleFactor = minMaxZoom(pinch.scale * stream.lastZoomFactor)
+        switch pinch.state {
+        case .began: fallthrough
+        case .changed: update(scale: newScaleFactor)
+        case .ended:
+            stream.lastZoomFactor = minMaxZoom(newScaleFactor)
+            update(scale: stream.lastZoomFactor)
+        default: break
+        }
+    }
+    
+    
     open func setZoomLevel(zoomFactor: CGFloat) {
        guard let streamId = publisherStreamId, let camera = webRTCClientMap[streamId]?.captureDevice else { return }
 
