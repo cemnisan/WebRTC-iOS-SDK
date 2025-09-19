@@ -528,11 +528,7 @@ class WebRTCClient: NSObject {
         }
         return (RTCCameraVideoCapturer.captureDevices().first { $0.position == self.cameraPosition })
     }
-    
-    public func getCapturedPhoto() {
-        
-    }
-    
+
     private func createVideoTrack() -> RTCVideoTrack? {
         if useExternalCameraSource {
             // try with screencast video source

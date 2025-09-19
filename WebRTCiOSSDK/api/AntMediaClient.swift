@@ -1352,6 +1352,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         )
     }
     
+    public func didTappedCapturePhoto() {
+        webRTCClientMap[publisherStreamId ?? ""]?.didTappedCapturePhoto()
+    }
+    
     func invalidateTimers() {
         audioLevelGetterTimer?.invalidate()
         audioLevelGetterTimer = nil
