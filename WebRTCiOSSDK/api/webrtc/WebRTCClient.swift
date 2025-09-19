@@ -74,7 +74,10 @@ class WebRTCClient: NSObject {
     // this is not an ideal method to get current capture device, we need more legit solution
     var captureDevice: AVCaptureDevice? {
         if videoEnabled {
-            return getDefaultCameraDevice(with: cameraPosition)
+            if #available(iOS 13.0, *) {
+                return getDefaultCameraDevice(with: cameraPosition)
+            }
+            return (RTCCameraVideoCapturer.captureDevices().first { $0.position == self.cameraPosition })
         }
         else {
           return nil;
