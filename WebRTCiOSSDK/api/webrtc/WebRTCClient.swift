@@ -66,16 +66,21 @@ class WebRTCClient: NSObject {
     
     private var degradationPreference: RTCDegradationPreference = .maintainResolution
     
+    
+    public var minimumZoom: CGFloat = 1.0
+    public var maximumZoom: CGFloat = 15.0
+    public var lastZoomFactor: CGFloat = 1.0
+    
     // this is not an ideal method to get current capture device, we need more legit solution
     var captureDevice: AVCaptureDevice? {
         if videoEnabled {
-          return (RTCCameraVideoCapturer.captureDevices().first { $0.position == self.cameraPosition })
+            return getDefaultCameraDevice(with: cameraPosition)
         }
         else {
           return nil;
         }
     }
-    
+
     public init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, externalAudio: Bool) {
         RTCInitializeSSL()
         
@@ -444,6 +449,46 @@ class WebRTCClient: NSObject {
         }
         
         return false
+    }
+    
+    private func getDefaultCameraDevice(with position: AVCaptureDevice.Position) -> AVCaptureDevice? {
+        let deviceName = UIDevice.type.rawValue
+        let shouldDeviceStartWithUltraWide = UIDevice
+            .devicesThatShouldStartWithUltraWide
+            .map { $0.rawValue }
+            .contains(deviceName)
+        
+        var captureDevice: AVCaptureDevice?
+        
+        if AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: position) != nil {
+            if shouldDeviceStartWithUltraWide,
+               let device = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: position) {
+                lastZoomFactor = 1.5
+                minimumZoom = 1.5
+                maximumZoom = device.maxAvailableVideoZoomFactor
+                captureDevice = device
+            } else if UIDevice.type == .iPhone14Pro || UIDevice.type == .iPhone14ProMax || UIDevice.type == .iPhone15Pro || UIDevice.type == .iPhone15ProMax || UIDevice.type == .unrecognized,
+                      let device = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: position) {
+                lastZoomFactor = 1.5
+                minimumZoom = 1.5
+                maximumZoom = device.maxAvailableVideoZoomFactor
+                captureDevice = device
+            } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) {
+                lastZoomFactor = 1.0
+                minimumZoom = 1.0
+                maximumZoom = device.maxAvailableVideoZoomFactor
+                captureDevice = device
+            }
+        } else {
+            if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) {
+                lastZoomFactor = 1.0
+                minimumZoom = 1.0
+                maximumZoom = device.maxAvailableVideoZoomFactor
+                captureDevice = device
+            }
+        }
+        
+        return captureDevice
     }
     
     private func createVideoTrack() -> RTCVideoTrack? {
