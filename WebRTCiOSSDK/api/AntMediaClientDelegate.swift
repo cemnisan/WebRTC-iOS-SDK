@@ -26,6 +26,8 @@ public class StreamInformation {
 
 public protocol AntMediaClientDelegate: AnyObject {
 
+    func didCameraCapturedPhoto(capturedPhoto photo: UIImage)
+    
     /**
      Called when websocket is connected
      */

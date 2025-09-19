@@ -1369,7 +1369,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
 }
 
 extension AntMediaClient: WebRTCClientDelegate {
-
+    func didCameraCapturedPhoto(capturedPhoto photo: UIImage) {
+        self.delegate?.didCameraCapturedPhoto(capturedPhoto: photo)
+    }
+    
     func trackAdded(track: RTCMediaStreamTrack, stream: [RTCMediaStream]) {
         self.delegate?.trackAdded(track: track, stream: stream)
     }

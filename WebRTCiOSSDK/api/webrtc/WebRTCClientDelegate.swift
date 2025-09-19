@@ -37,4 +37,6 @@ internal protocol WebRTCClientDelegate: AnyObject {
     func connectionStateChanged(newState: RTCIceConnectionState, streamId: String)
     
     func dataReceivedFromDataChannel(didReceiveData data: RTCDataBuffer, streamId: String)
+    
+    func didCameraCapturedPhoto(capturedPhoto photo: UIImage)
 }

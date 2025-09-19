@@ -66,7 +66,8 @@ class WebRTCClient: NSObject {
     
     private var degradationPreference: RTCDegradationPreference = .maintainResolution
     
-    
+    private var photoOutput: AVCapturePhotoOutput?
+
     public var minimumZoom: CGFloat = 1.0
     public var maximumZoom: CGFloat = 15.0
     public var lastZoomFactor: CGFloat = 1.0
@@ -251,6 +252,40 @@ class WebRTCClient: NSObject {
         return self.dataChannel?.readyState == .open
     }
     
+    private func addCapturePhotoOutput() {
+        let capturePhotoOutput = AVCapturePhotoOutput()
+        let videoCapturer = self.videoCapturer as? RTCCameraVideoCapturer
+        if videoCapturer?.captureSession.canAddOutput(capturePhotoOutput) == true {
+            videoCapturer?.captureSession.addOutput(capturePhotoOutput)
+            self.photoOutput = capturePhotoOutput
+        }
+    }
+    
+    public func didTappedCapturePhoto() {
+        // Photo capture only from back camera
+        guard _currentCaptureDevice != nil else { return }
+        
+        let settings = AVCapturePhotoSettings()
+        guard let previewPixelType = settings.availablePreviewPhotoPixelFormatTypes.first else { return }
+        
+        let screenSize = UIScreen.main.bounds.size
+        let previewFormat: [String : Any] = [
+            kCVPixelBufferPixelFormatTypeKey as String: previewPixelType,
+            kCVPixelBufferWidthKey as String: screenSize.width,
+            kCVPixelBufferHeightKey as String: screenSize.height
+        ]
+        
+        settings.previewPhotoFormat = previewFormat
+        photoOutput?.capturePhoto(with: settings, delegate: self)
+    }
+    
+    private func loadImage(data: Data) {
+        guard let dataProvider = CGDataProvider(data: data as CFData),
+              let cgImageRef: CGImage = CGImage(jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { return }
+        let image = UIImage(cgImage: cgImageRef, scale: 1.0, orientation: .right)
+        delegate?.didCameraCapturedPhoto(capturedPhoto: image)
+    }
+    
     public func sendAnswer() {
         let constraint = Config.createAudioVideoConstraints()
         self.peerConnection?.answer(for: constraint, completionHandler: { sdp, error in
@@ -405,8 +440,6 @@ class WebRTCClient: NSObject {
     }
     
     private func startCapture() -> Bool {
-      
-        
         if captureDevice != nil {
             let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: captureDevice!)
             
@@ -424,7 +457,6 @@ class WebRTCClient: NSObject {
             }
             
             if selectedFormat != nil {
-                
                 var maxSupportedFramerate: Float64 = 0
                 for fpsRange in selectedFormat!.videoSupportedFrameRateRanges {
                     maxSupportedFramerate = fmax(maxSupportedFramerate, fpsRange.maxFrameRate)
@@ -441,6 +473,7 @@ class WebRTCClient: NSObject {
                 cameraVideoCapturer?.startCapture(with: captureDevice!,
                                                   format: selectedFormat!,
                                                   fps: Int(fps))
+                
                 
                 return true
             } else {
@@ -496,6 +529,10 @@ class WebRTCClient: NSObject {
         return (RTCCameraVideoCapturer.captureDevices().first { $0.position == self.cameraPosition })
     }
     
+    public func getCapturedPhoto() {
+        
+    }
+    
     private func createVideoTrack() -> RTCVideoTrack? {
         if useExternalCameraSource {
             // try with screencast video source
@@ -519,7 +556,10 @@ class WebRTCClient: NSObject {
             #if TARGET_OS_SIMULATOR
             self.videoCapturer = RTCFileVideoCapturer(delegate: videoSource)
             #else
+            
             self.videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+            addCapturePhotoOutput()
+            
             let captureStarted = startCapture()
             if !captureStarted {
                 return nil
@@ -704,5 +744,16 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {
         // AntMediaClient.printf("---> didRemove")
+    }
+}
+
+// MARK: - AVCapturePhotoCaptureDelegate
+extension WebRTCClient: AVCapturePhotoCaptureDelegate {
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        guard error == nil, let outputData = photo.fileDataRepresentation() else {
+            print("Photo Error: \(String(describing: error))")
+            return
+        }
+        loadImage(data: outputData)
     }
 }
