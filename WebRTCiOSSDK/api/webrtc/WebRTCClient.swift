@@ -80,6 +80,8 @@ class WebRTCClient: NSObject {
           return nil;
         }
     }
+    
+    var _currentCaptureDevice: AVCaptureDevice?
 
     public init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, externalAudio: Bool) {
         RTCInitializeSSL()
@@ -488,6 +490,7 @@ class WebRTCClient: NSObject {
                     captureDevice = device
                 }
             }
+            self._currentCaptureDevice = captureDevice
             return captureDevice
         }
         return (RTCCameraVideoCapturer.captureDevices().first { $0.position == self.cameraPosition })
