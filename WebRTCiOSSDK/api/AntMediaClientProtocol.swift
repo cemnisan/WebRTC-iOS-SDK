@@ -162,6 +162,15 @@ public protocol AntMediaClientProtocol {
      */
     func switchCamera()
     
+    func didZoomingBegan(_ pinch: UIPinchGestureRecognizer)
+    
+    func focus(
+        with focusMode: AVCaptureDevice.FocusMode,
+        exposureMode: AVCaptureDevice.ExposureMode,
+        at devicePoint: CGPoint,
+        monitorSubjectAreaChange: Bool
+    )
+    
     /**
      Instant zoom
      1.0 means no zoom, 2.0 means 2x zoom, and so on.

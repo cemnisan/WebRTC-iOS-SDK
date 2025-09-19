@@ -754,6 +754,51 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         }
     }
     
+    open func focus(
+        with focusMode: AVCaptureDevice.FocusMode,
+        exposureMode: AVCaptureDevice.ExposureMode,
+        at devicePoint: CGPoint,
+        monitorSubjectAreaChange: Bool
+    ) {
+        dispatchQueue.async {
+            guard let streamId = self.publisherStreamId,
+                  let stream = self.webRTCClientMap[streamId],
+                  let device = stream.captureDevice else { return }
+            do {
+                try device.lockForConfiguration()
+                if  device.isFocusPointOfInterestSupported &&
+                        device.isFocusModeSupported(focusMode)
+                {
+                    device.focusPointOfInterest = devicePoint
+                    device.focusMode = focusMode
+                    if device.isSmoothAutoFocusSupported {
+                        device.isSmoothAutoFocusEnabled = true
+                    }
+                }
+                
+                if  device.isExposurePointOfInterestSupported &&
+                        device.isExposureModeSupported(exposureMode)
+                {
+                    device.exposurePointOfInterest = devicePoint
+                    device.exposureMode = exposureMode
+                }
+                
+                if device.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                    device.whiteBalanceMode = .continuousAutoWhiteBalance
+                }
+                
+                if device.isLowLightBoostSupported {
+                    device.automaticallyEnablesLowLightBoostWhenAvailable = true
+                }
+                
+                device.isSubjectAreaChangeMonitoringEnabled = monitorSubjectAreaChange
+                device.unlockForConfiguration()
+            } catch {
+                print("couldn't lock device for configuration: \(error)")
+            }
+        }
+    }
+    
     open func toggleVideo() {
         self.webRTCClientMap[getPublisherStreamId()]?.toggleVideoEnabled()
         
