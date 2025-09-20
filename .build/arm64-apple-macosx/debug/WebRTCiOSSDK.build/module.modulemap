@@ -1,0 +1,4 @@
+module WebRTCiOSSDK {
+    header "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCiOSSDK-Swift.h"
+    requires objc
+}

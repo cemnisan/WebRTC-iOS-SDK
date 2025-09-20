@@ -1,0 +1,77 @@
+{
+  "": {
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/master.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/AntMediaClient.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClient.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClient.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClient.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/AntMediaClientDelegate.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientDelegate.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientDelegate.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientDelegate.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/AntMediaClientProtocol.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientProtocol.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientProtocol.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientProtocol~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaClientProtocol.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/AntMediaError.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaError.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaError.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaError~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AntMediaError.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/utils/ClientStatistics.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/ClientStatistics.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/ClientStatistics.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/ClientStatistics~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/ClientStatistics.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/Config.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Config.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Config.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Config~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Config.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/Dictionary.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/RTCCustomFrameCapturer.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/RTCCustomFrameCapturer.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/RTCCustomFrameCapturer.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/RTCCustomFrameCapturer~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/RTCCustomFrameCapturer.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/String.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/String.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/String.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/String~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/String.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/WebRTCClient.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClient.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClient.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClient.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/WebRTCClientDelegate.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClientDelegate.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClientDelegate.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClientDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/WebRTCClientDelegate.swiftdeps"
+  },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/utils/UIDevice+Extension.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/UIDevice+Extension.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/UIDevice+Extension.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/UIDevice+Extension~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/UIDevice+Extension.swiftdeps"
+  }
+}

@@ -1356,10 +1356,6 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         webRTCClientMap[publisherStreamId ?? ""]?.didTappedCapturePhoto()
     }
     
-    public func getRemoteView() -> RTCVideoRenderer? {
-       return webRTCClientMap[publisherStreamId ?? ""]?.remoteVideoView
-    }
-    
     func invalidateTimers() {
         audioLevelGetterTimer?.invalidate()
         audioLevelGetterTimer = nil
