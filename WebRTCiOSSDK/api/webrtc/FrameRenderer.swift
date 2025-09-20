@@ -4,7 +4,6 @@ import WebRTC
 import AVKit
 import VideoToolbox
 import Accelerate
-import libwebp
 
 // Define closure type for handling CMSampleBuffer, orientation, scaleFactor, and userID
 public typealias CMSampleBufferRenderer = (CMSampleBuffer, CGImagePropertyOrientation, CGFloat, Int) -> ()
