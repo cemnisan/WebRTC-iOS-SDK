@@ -70,23 +70,26 @@ public class FrameRenderer: NSObject, RTCVideoRenderer {
     
     // Function to create a CVPixelBuffer from a CIImage
     public func createPixelBufferFrom(image: CIImage) -> CVPixelBuffer? {
-        let attrs = [
-            kCVPixelBufferCGImageCompatibilityKey: false,
-            kCVPixelBufferCGBitmapContextCompatibilityKey: false,
-            kCVPixelBufferWidthKey: Int(image.extent.width),
-            kCVPixelBufferHeightKey: Int(image.extent.height)
-        ] as CFDictionary
-        
-        var pixelBuffer: CVPixelBuffer?
-        let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(image.extent.width), Int(image.extent.height), kCVPixelFormatType_32BGRA, attrs, &pixelBuffer)
-        
-        if status == kCVReturnSuccess {
-            self.ciContext.render(image, to: pixelBuffer!)
-            return pixelBuffer
-        } else {
-            // Failed to create a CVPixelBuffer
-            return nil
+        if #available(iOS 15.0, *) {
+            let attrs = [
+                kCVPixelBufferCGImageCompatibilityKey: false,
+                kCVPixelBufferCGBitmapContextCompatibilityKey: false,
+                kCVPixelBufferWidthKey: Int(image.extent.width),
+                kCVPixelBufferHeightKey: Int(image.extent.height)
+            ] as CFDictionary
+            
+            var pixelBuffer: CVPixelBuffer?
+            let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(image.extent.width), Int(image.extent.height), kCVPixelFormatType_32BGRA, attrs, &pixelBuffer)
+            
+            if status == kCVReturnSuccess {
+                self.ciContext.render(image, to: pixelBuffer!)
+                return pixelBuffer
+            } else {
+                // Failed to create a CVPixelBuffer
+                return nil
+            }
         }
+        return nil
     }
     
     // Function to create a CVPixelBuffer from a CIImage using an existing CVPixelBuffer
