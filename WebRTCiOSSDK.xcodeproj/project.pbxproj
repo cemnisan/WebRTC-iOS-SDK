@@ -54,7 +54,6 @@
 		A8DAC0522A063D300007CDE7 /* WebRTC.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; };
 		A8DAC0532A063D300007CDE7 /* WebRTC.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A8DAC0A42A0672040007CDE7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A8DAC0A22A0672040007CDE7 /* LaunchScreen.storyboard */; };
-		F8A033432E7EB9CA00BBF2D6 /* AVPictureInPictureController+WebRTC.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A033422E7EB9CA00BBF2D6 /* AVPictureInPictureController+WebRTC.swift */; };
 		F8DA5A412E7D75CE0084B2D1 /* UIDevice+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8DA5A402E7D75CE0084B2D1 /* UIDevice+Extension.swift */; };
 /* End PBXBuildFile section */
 
@@ -198,7 +197,6 @@
 		A8DAC03F2A063BC00007CDE7 /* Run.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Run.swift; sourceTree = "<group>"; };
 		A8DAC0402A063BC00007CDE7 /* ConferenceViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConferenceViewController.swift; sourceTree = "<group>"; };
 		A8DAC0A32A0672040007CDE7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		F8A033422E7EB9CA00BBF2D6 /* AVPictureInPictureController+WebRTC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AVPictureInPictureController+WebRTC.swift"; sourceTree = "<group>"; };
 		F8DA5A402E7D75CE0084B2D1 /* UIDevice+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -344,7 +342,6 @@
 				A8DABFEC2A063A020007CDE7 /* WebRTCClient.swift */,
 				A8DABFED2A063A020007CDE7 /* Dictionary.swift */,
 				A8DABFEE2A063A020007CDE7 /* String.swift */,
-				F8A033422E7EB9CA00BBF2D6 /* AVPictureInPictureController+WebRTC.swift */,
 			);
 			path = webrtc;
 			sourceTree = "<group>";
@@ -706,7 +703,6 @@
 				A8DABFF92A063A020007CDE7 /* String.swift in Sources */,
 				F8DA5A412E7D75CE0084B2D1 /* UIDevice+Extension.swift in Sources */,
 				A8DABFF82A063A020007CDE7 /* Dictionary.swift in Sources */,
-				F8A033432E7EB9CA00BBF2D6 /* AVPictureInPictureController+WebRTC.swift in Sources */,
 				A8DABFF02A063A020007CDE7 /* AntMediaClient.swift in Sources */,
 				A8DABFF42A063A020007CDE7 /* RTCCustomFrameCapturer.swift in Sources */,
 				A8DABFF52A063A020007CDE7 /* Config.swift in Sources */,

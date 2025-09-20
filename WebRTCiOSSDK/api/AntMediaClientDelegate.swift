@@ -281,30 +281,4 @@ public extension AntMediaClientDelegate {
         AntMediaClient.printf("streamId: \(streamId) stats received")
     }
     
-    // MARK: - Picture in Picture Default Implementations
-    
-    func pictureInPictureWillStart() {
-        AntMediaClient.printf("Picture in Picture will start")
-    }
-    
-    func pictureInPictureDidStart() {
-        AntMediaClient.printf("Picture in Picture did start")
-    }
-    
-    func pictureInPictureWillStop() {
-        AntMediaClient.printf("Picture in Picture will stop")
-    }
-    
-    func pictureInPictureDidStop() {
-        AntMediaClient.printf("Picture in Picture did stop")
-    }
-    
-    func pictureInPictureFailedToStart(error: Error) {
-        AntMediaClient.printf("Picture in Picture failed to start: \(error.localizedDescription)")
-    }
-    
-    func pictureInPictureRestoreButtonTapped() {
-        AntMediaClient.printf("Picture in Picture restore button tapped")
-    }
-    
 }

@@ -32,12 +32,6 @@
     "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/ClientStatistics~partial.swiftmodule",
     "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/ClientStatistics.swiftdeps"
   },
-  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/AVPictureInPictureController+WebRTC.swift": {
-    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AVPictureInPictureController+WebRTC.d",
-    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AVPictureInPictureController+WebRTC.swift.o",
-    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AVPictureInPictureController+WebRTC~partial.swiftmodule",
-    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/AVPictureInPictureController+WebRTC.swiftdeps"
-  },
   "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/Config.swift": {
     "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Config.d",
     "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Config.swift.o",
