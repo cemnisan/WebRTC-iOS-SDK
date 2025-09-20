@@ -40,6 +40,8 @@ class WebRTCClient: NSObject {
     private var audioEnabled: Bool = true
     private var videoEnabled: Bool = true
     
+    private var frameRenderer: FrameRenderer?
+    
     /**
      If useExternalCameraSource is false, it opens the local camera
      If it's true, it does not open the local camera. When it's set to true, it can record the screen in-app or you can give external frames through your application or BroadcastExtension. If you give external frames or through BroadcastExtension, you need to set the externalVideoCapture to true as well
@@ -248,6 +250,23 @@ class WebRTCClient: NSObject {
         }
     }
     
+
+    func renderRemoteVideo(to renderer: RTCVideoRenderer) {
+        // Make sure you have already initialized the remoteVideoTrack from the WebRTC video call.
+
+        if frameRenderer == nil {
+            frameRenderer = FrameRenderer(uID: 1)
+        }
+
+        self.remoteVideoTrack?.add(frameRenderer!)
+    }
+    
+    func removeRenderRemoteVideo(to renderer: RTCVideoRenderer) {
+        if frameRenderer != nil {
+            self.remoteVideoTrack?.remove(frameRenderer!)
+        }
+    }
+
     public func isDataChannelActive() -> Bool {
         return self.dataChannel?.readyState == .open
     }
@@ -385,6 +404,7 @@ class WebRTCClient: NSObject {
         
         if let view = self.remoteVideoView {
             self.remoteVideoTrack?.remove(view)
+            removeRenderRemoteVideo(to: view)
         }
         
         self.remoteVideoView?.renderFrame(nil)
@@ -688,6 +708,8 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
                 
                 // remoteVideoTrack.setEnabled(true)
                 remoteVideoTrack.add(remoteVideoView!)
+                renderRemoteVideo(to: remoteVideoView!)
+                
                 AntMediaClient.printf("Has delegate??? (signalingStateChanged): \(String(describing: self.delegate))")
             }
         }
@@ -701,6 +723,10 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
         delegate?.remoteStreamRemoved(streamId: self.streamId)
         remoteVideoTrack = nil
         remoteAudioTrack = nil
+        
+        if let remoteVideoView = remoteVideoView {
+            removeRenderRemoteVideo(to: remoteVideoView)
+        }
     }
     
     // GotICECandidate

@@ -44,6 +44,12 @@
     "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary~partial.swiftmodule",
     "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary.swiftdeps"
   },
+  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/FrameRenderer.swift": {
+    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/FrameRenderer.d",
+    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/FrameRenderer.swift.o",
+    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/FrameRenderer~partial.swiftmodule",
+    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/FrameRenderer.swiftdeps"
+  },
   "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/RTCCustomFrameCapturer.swift": {
     "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/RTCCustomFrameCapturer.d",
     "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/RTCCustomFrameCapturer.swift.o",

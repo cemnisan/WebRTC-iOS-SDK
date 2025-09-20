@@ -54,6 +54,8 @@
 		A8DAC0522A063D300007CDE7 /* WebRTC.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; };
 		A8DAC0532A063D300007CDE7 /* WebRTC.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A8DABFFD2A063A500007CDE7 /* WebRTC.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A8DAC0A42A0672040007CDE7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A8DAC0A22A0672040007CDE7 /* LaunchScreen.storyboard */; };
+		F8A033472E7ED2ED00BBF2D6 /* FrameRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A033462E7ED2ED00BBF2D6 /* FrameRenderer.swift */; };
+		F8A0334A2E7ED41900BBF2D6 /* libwebp in Frameworks */ = {isa = PBXBuildFile; productRef = F8A033492E7ED41900BBF2D6 /* libwebp */; };
 		F8DA5A412E7D75CE0084B2D1 /* UIDevice+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8DA5A402E7D75CE0084B2D1 /* UIDevice+Extension.swift */; };
 /* End PBXBuildFile section */
 
@@ -197,6 +199,7 @@
 		A8DAC03F2A063BC00007CDE7 /* Run.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Run.swift; sourceTree = "<group>"; };
 		A8DAC0402A063BC00007CDE7 /* ConferenceViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConferenceViewController.swift; sourceTree = "<group>"; };
 		A8DAC0A32A0672040007CDE7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		F8A033462E7ED2ED00BBF2D6 /* FrameRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameRenderer.swift; sourceTree = "<group>"; };
 		F8DA5A402E7D75CE0084B2D1 /* UIDevice+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -215,6 +218,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F8A0334A2E7ED41900BBF2D6 /* libwebp in Frameworks */,
 				A8DAC04F2A063C9B0007CDE7 /* WebRTC.xcframework in Frameworks */,
 				A8DABFFC2A063A2F0007CDE7 /* Starscream in Frameworks */,
 			);
@@ -342,6 +346,7 @@
 				A8DABFEC2A063A020007CDE7 /* WebRTCClient.swift */,
 				A8DABFED2A063A020007CDE7 /* Dictionary.swift */,
 				A8DABFEE2A063A020007CDE7 /* String.swift */,
+				F8A033462E7ED2ED00BBF2D6 /* FrameRenderer.swift */,
 			);
 			path = webrtc;
 			sourceTree = "<group>";
@@ -478,6 +483,7 @@
 			name = WebRTCiOSSDK;
 			packageProductDependencies = (
 				A8DABFFB2A063A2F0007CDE7 /* Starscream */,
+				F8A033492E7ED41900BBF2D6 /* libwebp */,
 			);
 			productName = WebRTCiOSSDK;
 			productReference = A8DABFCA2A0639D80007CDE7 /* WebRTCiOSSDK.framework */;
@@ -602,6 +608,7 @@
 			mainGroup = A8DABFC02A0639D70007CDE7;
 			packageReferences = (
 				A8DABFFA2A063A2F0007CDE7 /* XCRemoteSwiftPackageReference "Starscream" */,
+				F8A033482E7ED3FD00BBF2D6 /* XCRemoteSwiftPackageReference "libwebp-Xcode" */,
 			);
 			productRefGroup = A8DABFCB2A0639D80007CDE7 /* Products */;
 			projectDirPath = "";
@@ -712,6 +719,7 @@
 				A8DABFF62A063A020007CDE7 /* WebRTCClientDelegate.swift in Sources */,
 				A8DABFF22A063A020007CDE7 /* AntMediaClientProtocol.swift in Sources */,
 				A8CAF2BF2C0B1DFC00520691 /* ClientStatistics.swift in Sources */,
+				F8A033472E7ED2ED00BBF2D6 /* FrameRenderer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1331,6 +1339,14 @@
 				minimumVersion = 4.0.0;
 			};
 		};
+		F8A033482E7ED3FD00BBF2D6 /* XCRemoteSwiftPackageReference "libwebp-Xcode" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/libwebp-Xcode";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1338,6 +1354,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A8DABFFA2A063A2F0007CDE7 /* XCRemoteSwiftPackageReference "Starscream" */;
 			productName = Starscream;
+		};
+		F8A033492E7ED41900BBF2D6 /* libwebp */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F8A033482E7ED3FD00BBF2D6 /* XCRemoteSwiftPackageReference "libwebp-Xcode" */;
+			productName = libwebp;
 		};
 /* End XCSwiftPackageProductDependency section */
 
