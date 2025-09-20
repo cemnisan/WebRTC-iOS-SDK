@@ -9,6 +9,7 @@ import Foundation
 import AVFoundation
 import Starscream
 import WebRTC
+import AVKit
 
 let TAG: String = "AntMedia_iOS: "
 
@@ -1399,14 +1400,14 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         let videoTrack = webRTCClient.getLocalVideoTrack()
         let videoView = webRTCClient.localVideoView
         
-        guard let track = videoTrack, let view = videoView else {
+        guard let view = videoView else {
             let error = NSError(domain: "PictureInPictureError", code: -3, userInfo: [NSLocalizedDescriptionKey: "No video track or view available for Picture in Picture"])
             completion(false, error)
             return
         }
         
         // Create PiP controller using extension with automatic configuration
-        pictureInPictureController = track.createPictureInPictureController(
+        pictureInPictureController = videoTrack.createPictureInPictureController(
             videoView: view,
             canStartAutomatically: canStartPictureInPictureAutomatically
         )
@@ -1418,7 +1419,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         }
         
         // Start PiP
-        pipController.startPictureInPictureWithWebRTC(videoTrack: track, videoView: view) { success, error in
+        pipController.startPictureInPictureWithWebRTC(videoTrack: videoTrack, videoView: view) { success, error in
             completion(success, error)
         }
     }

@@ -43,8 +43,8 @@ public extension AVPictureInPictureController {
         let pipController = AVPictureInPictureController(playerLayer: playerLayer)
         
         // Configure automatic PiP start
-        if #available(iOS 14.0, *) {
-            pipController.canStartPictureInPictureAutomaticallyFromInline = canStartAutomatically
+        if #available(iOS 14.2, *) {
+            pipController?.canStartPictureInPictureAutomaticallyFromInline = canStartAutomatically
         }
         
         // Configure the video view for PiP
