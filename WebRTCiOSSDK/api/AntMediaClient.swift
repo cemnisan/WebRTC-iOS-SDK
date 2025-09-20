@@ -128,6 +128,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     var disableTrackId: String?
     
     var reconnectIfRequiresScheduled: Bool = false
+    
+    // Picture in Picture support
+    private var pictureInPictureController: AVPictureInPictureController?
+    private var isPictureInPictureEnabled: Bool = false
+    private var canStartPictureInPictureAutomatically: Bool = true
         
     struct HandshakeMessage: Codable {
         var command: String?
@@ -1354,6 +1359,129 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     
     public func didTappedCapturePhoto() {
         webRTCClientMap[publisherStreamId ?? ""]?.didTappedCapturePhoto()
+    }
+    
+    // MARK: - Picture in Picture Methods
+    
+    /// Enable Picture in Picture support with automatic activation
+    /// - Parameters:
+    ///   - canStartAutomatically: Whether PiP can start automatically when app goes to background
+    public func enablePictureInPicture(canStartAutomatically: Bool = true) {
+        isPictureInPictureEnabled = true
+        canStartPictureInPictureAutomatically = canStartAutomatically
+    }
+    
+    /// Disable Picture in Picture support
+    public func disablePictureInPicture() {
+        isPictureInPictureEnabled = false
+        stopPictureInPicture()
+    }
+    
+    /// Start Picture in Picture for the current stream
+    /// - Parameters:
+    ///   - streamId: The stream ID to display in PiP (optional, uses current stream if not provided)
+    ///   - completion: Completion handler called when PiP starts or fails
+    public func startPictureInPicture(streamId: String = "", completion: @escaping (Bool, Error?) -> Void) {
+        guard isPictureInPictureEnabled else {
+            let error = NSError(domain: "PictureInPictureError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Picture in Picture is not enabled. Call enablePictureInPicture() first."])
+            completion(false, error)
+            return
+        }
+        
+        let targetStreamId = getStreamId(streamId)
+        guard let webRTCClient = webRTCClientMap[targetStreamId] else {
+            let error = NSError(domain: "PictureInPictureError", code: -2, userInfo: [NSLocalizedDescriptionKey: "No WebRTC client found for stream: \(targetStreamId)"])
+            completion(false, error)
+            return
+        }
+        
+        // Get the video track to display in PiP
+        let videoTrack = webRTCClient.getLocalVideoTrack()
+        let videoView = webRTCClient.localVideoView
+        
+        guard let track = videoTrack, let view = videoView else {
+            let error = NSError(domain: "PictureInPictureError", code: -3, userInfo: [NSLocalizedDescriptionKey: "No video track or view available for Picture in Picture"])
+            completion(false, error)
+            return
+        }
+        
+        // Create PiP controller using extension with automatic configuration
+        pictureInPictureController = track.createPictureInPictureController(
+            videoView: view,
+            canStartAutomatically: canStartPictureInPictureAutomatically
+        )
+        
+        guard let pipController = pictureInPictureController else {
+            let error = NSError(domain: "PictureInPictureError", code: -4, userInfo: [NSLocalizedDescriptionKey: "Failed to create Picture in Picture controller"])
+            completion(false, error)
+            return
+        }
+        
+        // Start PiP
+        pipController.startPictureInPictureWithWebRTC(videoTrack: track, videoView: view) { success, error in
+            completion(success, error)
+        }
+    }
+    
+    /// Start Picture in Picture for remote stream
+    /// - Parameters:
+    ///   - streamId: The stream ID to display in PiP
+    ///   - completion: Completion handler called when PiP starts or fails
+    public func startPictureInPictureForRemoteStream(streamId: String, completion: @escaping (Bool, Error?) -> Void) {
+        guard isPictureInPictureEnabled else {
+            let error = NSError(domain: "PictureInPictureError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Picture in Picture is not enabled. Call enablePictureInPicture() first."])
+            completion(false, error)
+            return
+        }
+        
+        guard let webRTCClient = webRTCClientMap[streamId] else {
+            let error = NSError(domain: "PictureInPictureError", code: -2, userInfo: [NSLocalizedDescriptionKey: "No WebRTC client found for stream: \(streamId)"])
+            completion(false, error)
+            return
+        }
+        
+        // Get the remote video track to display in PiP
+        let videoTrack = webRTCClient.remoteVideoTrack
+        let videoView = webRTCClient.remoteVideoView
+        
+        guard let track = videoTrack, let view = videoView else {
+            let error = NSError(domain: "PictureInPictureError", code: -3, userInfo: [NSLocalizedDescriptionKey: "No remote video track or view available for Picture in Picture"])
+            completion(false, error)
+            return
+        }
+        
+        // Create PiP controller using extension with automatic configuration
+        pictureInPictureController = track.createPictureInPictureController(
+            videoView: view,
+            canStartAutomatically: canStartPictureInPictureAutomatically
+        )
+        
+        guard let pipController = pictureInPictureController else {
+            let error = NSError(domain: "PictureInPictureError", code: -4, userInfo: [NSLocalizedDescriptionKey: "Failed to create Picture in Picture controller"])
+            completion(false, error)
+            return
+        }
+        
+        // Start PiP
+        pipController.startPictureInPictureWithWebRTC(videoTrack: track, videoView: view) { success, error in
+            completion(success, error)
+        }
+    }
+    
+    /// Stop Picture in Picture
+    public func stopPictureInPicture() {
+        pictureInPictureController?.stopPictureInPicture()
+        pictureInPictureController = nil
+    }
+    
+    /// Check if Picture in Picture is currently active
+    public func isPictureInPictureActive() -> Bool {
+        return pictureInPictureController?.isPictureInPictureActive ?? false
+    }
+    
+    /// Check if Picture in Picture is supported on the current device
+    public static func isPictureInPictureSupported() -> Bool {
+        return AVPictureInPictureController.isPictureInPictureSupported()
     }
     
     func invalidateTimers() {
