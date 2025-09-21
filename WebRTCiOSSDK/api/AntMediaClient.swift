@@ -508,6 +508,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 self.webRTCClientMap[id]?.addLocalMediaStream()
             }
             
+            self.setDefaultCameraZoomFactorIfNeeded()
+            
             self.webRTCClientMap[id]?.setToken(token)
             
             rtcAudioSession.add(self)
@@ -523,6 +525,18 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      */
     open func switchCamera() {
         self.webRTCClientMap[(self.publisherStreamId ?? (self.p2pStreamId)) ?? ""]?.switchCamera()
+    }
+    
+    public func setDefaultCameraZoomFactorIfNeeded() {
+        guard let streamId = publisherStreamId,
+              let stream = webRTCClientMap[streamId],
+              let camera = stream.captureDevice else { return }
+        
+        if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
+            try? camera.lockForConfiguration()
+            camera.videoZoomFactor = 1.5
+            camera.unlockForConfiguration()
+        }
     }
     
     /**
