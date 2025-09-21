@@ -522,7 +522,7 @@ class WebRTCClient: NSObject {
             }*/
             do {
                 try camera.lockForConfiguration()
-                camera.videoZoomFactor = 1.5
+                camera.videoZoomFactor = 3.0
                 camera.unlockForConfiguration()
             } catch {
                 print("couldn't set video zoom factor to 1.5")
