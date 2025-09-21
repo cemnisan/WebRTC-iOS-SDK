@@ -512,9 +512,13 @@ class WebRTCClient: NSObject {
             guard let camera = captureDevice else { return }
             
             if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
-                try? camera.lockForConfiguration()
-                camera.videoZoomFactor = 1.5
-                camera.unlockForConfiguration()
+                do {
+                    try camera.lockForConfiguration()
+                    camera.videoZoomFactor = 1.5
+                    camera.unlockForConfiguration()
+                } catch {
+                    print("couldn't set video zoom factor to 1.5")
+                }
             }
         }
     }
