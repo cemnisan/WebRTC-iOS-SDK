@@ -509,23 +509,16 @@ class WebRTCClient: NSObject {
     
     private func setDefaultCameraZoomFactorIfNeeded() {
         if #available(iOS 15.0, *) {
-            guard let camera = captureDevice else { return }
+            guard let camera = _currentCaptureDevice else { return }
             
-            /*if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
+            if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
                 do {
-                    try camera.lockForConfiguration()
-                    camera.videoZoomFactor = 1.5
-                    camera.unlockForConfiguration()
+                    try _currentCaptureDevice?.lockForConfiguration()
+                    _currentCaptureDevice?.videoZoomFactor = 1.5
+                    _currentCaptureDevice?.unlockForConfiguration()
                 } catch {
                     print("couldn't set video zoom factor to 1.5")
                 }
-            }*/
-            do {
-                try _currentCaptureDevice?.lockForConfiguration()
-                _currentCaptureDevice?.videoZoomFactor = 3.0
-                _currentCaptureDevice?.unlockForConfiguration()
-            } catch {
-                print("couldn't set video zoom factor to 1.5")
             }
         }
     }
