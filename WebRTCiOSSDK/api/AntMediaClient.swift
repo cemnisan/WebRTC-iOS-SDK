@@ -533,7 +533,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                   let stream = webRTCClientMap[streamId],
                   let camera = stream.captureDevice else { return }
             
-            if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
+            if camera.deviceType != .builtInUltraWideCamera || camera.deviceType != .builtInTripleCamera {
                 try? camera.lockForConfiguration()
                 camera.videoZoomFactor = 1.5
                 camera.unlockForConfiguration()
