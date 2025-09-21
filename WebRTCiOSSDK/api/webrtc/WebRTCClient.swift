@@ -490,12 +490,12 @@ class WebRTCClient: NSObject {
                 
                 let cameraVideoCapturer = self.videoCapturer as? RTCCameraVideoCapturer
                 
-                cameraVideoCapturer?.startCapture(with: captureDevice!,
-                                                  format: selectedFormat!,
-                                                  fps: Int(fps))
-                
                 setDefaultCameraZoomFactorIfNeeded()
                 
+                cameraVideoCapturer?.startCapture(with: _currentCaptureDevice ?? captureDevice!,
+                                                  format: selectedFormat!,
+                                                  fps: Int(fps))
+                                
                 return true
             } else {
                 AntMediaClient.printf("Cannot open camera not suitable format")
@@ -521,9 +521,9 @@ class WebRTCClient: NSObject {
                 }
             }*/
             do {
-                try camera.lockForConfiguration()
-                camera.videoZoomFactor = 3.0
-                camera.unlockForConfiguration()
+                try _currentCaptureDevice?.lockForConfiguration()
+                _currentCaptureDevice?.videoZoomFactor = 3.0
+                _currentCaptureDevice?.unlockForConfiguration()
             } catch {
                 print("couldn't set video zoom factor to 1.5")
             }
