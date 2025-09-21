@@ -494,6 +494,7 @@ class WebRTCClient: NSObject {
                                                   format: selectedFormat!,
                                                   fps: Int(fps))
                 
+                setDefaultCameraZoomFactorIfNeeded()
                 
                 return true
             } else {
@@ -505,6 +506,19 @@ class WebRTCClient: NSObject {
         
         return false
     }
+    
+    private func setDefaultCameraZoomFactorIfNeeded() {
+        if #available(iOS 15.0, *) {
+            guard let camera = captureDevice else { return }
+            
+            if camera.deviceType != .builtInUltraWideCamera || camera.deviceType != .builtInTripleCamera {
+                try? camera.lockForConfiguration()
+                camera.videoZoomFactor = 1.5
+                camera.unlockForConfiguration()
+            }
+        }
+    }
+    
     
     private func getDefaultCameraDevice(with position: AVCaptureDevice.Position) -> AVCaptureDevice? {
         if #available(iOS 13.0, *) {
