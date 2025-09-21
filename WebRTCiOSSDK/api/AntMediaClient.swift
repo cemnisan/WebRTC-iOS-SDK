@@ -528,14 +528,16 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     public func setDefaultCameraZoomFactorIfNeeded() {
-        guard let streamId = publisherStreamId,
-              let stream = webRTCClientMap[streamId],
-              let camera = stream.captureDevice else { return }
-        
-        if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
-            try? camera.lockForConfiguration()
-            camera.videoZoomFactor = 1.5
-            camera.unlockForConfiguration()
+        if #available(iOS 15.0, *) {
+            guard let streamId = publisherStreamId,
+                  let stream = webRTCClientMap[streamId],
+                  let camera = stream.captureDevice else { return }
+            
+            if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
+                try? camera.lockForConfiguration()
+                camera.videoZoomFactor = 1.5
+                camera.unlockForConfiguration()
+            }
         }
     }
     
