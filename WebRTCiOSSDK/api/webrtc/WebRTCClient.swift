@@ -511,7 +511,7 @@ class WebRTCClient: NSObject {
         if #available(iOS 15.0, *) {
             guard let camera = captureDevice else { return }
             
-            if camera.deviceType != .builtInUltraWideCamera || camera.deviceType != .builtInTripleCamera {
+            if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
                 try? camera.lockForConfiguration()
                 camera.videoZoomFactor = 1.5
                 camera.unlockForConfiguration()
@@ -536,12 +536,14 @@ class WebRTCClient: NSObject {
                     lastZoomFactor = 1.5
                     minimumZoom = 1.5
                     maximumZoom = device.maxAvailableVideoZoomFactor
+                    device.videoZoomFactor = 1.5
                     captureDevice = device
                 } else if UIDevice.type == .iPhone14Pro || UIDevice.type == .iPhone14ProMax || UIDevice.type == .iPhone15Pro || UIDevice.type == .iPhone15ProMax || UIDevice.type == .unrecognized,
                           let device = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: position) {
                     lastZoomFactor = 1.5
                     minimumZoom = 1.5
                     maximumZoom = device.maxAvailableVideoZoomFactor
+                    device.videoZoomFactor = 1.5
                     captureDevice = device
                 } else if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) {
                     lastZoomFactor = 1.0
