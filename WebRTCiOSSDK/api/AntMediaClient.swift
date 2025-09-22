@@ -1042,7 +1042,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             // if this is called, it's publisher or initiator in p2p
             let streamId = message[STREAM_ID] as! String
             //self.webRTCClientMap[streamId]?.createOffer()
-            self.webRTCClientMap[streamId]?.createLatencyChannel()
+           // self.webRTCClientMap[streamId]?.createLatencyChannel()
             
         case "stop":
             let streamId = message[STREAM_ID] as! String
@@ -1093,7 +1093,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 AntMediaClient.printf("Publish started: Let's go")
                 self.webRTCClientMap[streamId]?.setMaxVideoBps(maxVideoBps: self.maxVideoBps)
                 self.delegate?.publishStarted(streamId: message[STREAM_ID] as! String)
-                self.webRTCClientMap[streamId]?.sendTimestamp()
+               // self.webRTCClientMap[streamId]?.sendTimestamp()
                 
             } else if definition == "publish_finished" {
                 let streamId = message[STREAM_ID] as! String
