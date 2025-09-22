@@ -1091,6 +1091,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 AntMediaClient.printf("Publish started: Let's go")
                 self.webRTCClientMap[streamId]?.setMaxVideoBps(maxVideoBps: self.maxVideoBps)
                 self.delegate?.publishStarted(streamId: message[STREAM_ID] as! String)
+                self.webRTCClientMap[streamId]?.sendTimestamp()
                 
             } else if definition == "publish_finished" {
                 let streamId = message[STREAM_ID] as! String
@@ -1429,6 +1430,7 @@ extension AntMediaClient: WebRTCClientDelegate {
         
         if let eventType = json?[EVENT_TYPE] {
             // event happened
+            print("event type is", eventType)
             if let incomingStreamId = json?[STREAM_ID] {
                 
                 self.delegate?.eventHappened(streamId: incomingStreamId as! String, eventType: eventType as! String)
@@ -1467,6 +1469,7 @@ extension AntMediaClient: WebSocketDelegate {
             self.websocketConnected()
             self.delegate?.clientDidConnect(self)
             self.webRTCClientMap[self.publisherStreamId ?? ""]?.setDefaultCameraZoomFactorIfNeeded()
+            self.webRTCClientMap[self.publisherStreamId ?? ""]?.createLatencyChannel()
 
             // too keep the connetion alive send ping command for every 10 seconds
             pingTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
