@@ -1445,10 +1445,7 @@ extension AntMediaClient: WebRTCClientDelegate {
                     eventType: eventType as! String,
                     payload: json
                 )
-            } else {
-                AntMediaClient.printf("Incoming message does not have streamId: \(json)")
-            }
-            if (eventType as? String) == "frame-ts" {
+                
                 if let serverTs = json?["serverTimestamp"] as? Int64 {
                     let clientNow = Int64(Date().timeIntervalSince1970 * 1000)
                     // Round-trip latency hesaplama: client'ın gönderdiği timestamp ile aldığı timestamp arasındaki fark
@@ -1460,6 +1457,8 @@ extension AntMediaClient: WebRTCClientDelegate {
                         print("Warning: Negative latency detected. This might indicate a clock synchronization issue.")
                     }
                 }
+            } else {
+                AntMediaClient.printf("Incoming message does not have streamId: \(json)")
             }
         } else {
             self.delegate?.dataReceivedFromDataChannel(streamId: streamId, data: data.data, binary: data.isBinary)
