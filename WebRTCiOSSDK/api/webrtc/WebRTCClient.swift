@@ -27,10 +27,8 @@ class WebRTCClient: NSObject {
     private var videoCapturer: RTCVideoCapturer?
     var localVideoTrack: RTCVideoTrack!
     var localAudioTrack: RTCAudioTrack!
-    
     var remoteVideoTrack: RTCVideoTrack!
     var remoteAudioTrack: RTCAudioTrack!
-    
     var remoteVideoView: RTCVideoRenderer?
     var localVideoView: RTCVideoRenderer?
     var videoSender: RTCRtpSender?
@@ -342,24 +340,6 @@ class WebRTCClient: NSObject {
         })
     }
     
-    public func createLatencyChannel() {
-        let latencyChannel = createDataChannel(channelName: "latency")
-        self.dataChannel = latencyChannel
-        self.dataChannel?.delegate = self
-    }
-    
-    public func sendTimestamp() {
-        let ts = Int64(Date().timeIntervalSince1970 * 1000)
-        let json: [String: Any] = ["type": "frame-ts", "serverTimestamp": ts]
-        let data = try! JSONSerialization.data(withJSONObject: json)
-        let buffer = RTCDataBuffer(data: data, isBinary: false)
-        dataChannel?.sendData(buffer)
-        
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            self.sendTimestamp()
-        }
-     }
-    
     public func createOffer() {
         
         // let the one who creates offer also create data channel.
@@ -406,9 +386,9 @@ class WebRTCClient: NSObject {
         disconnect()
     }
     
-    private func createDataChannel(channelName: String = "WebRTCData")-> RTCDataChannel? {
+    private func createDataChannel() -> RTCDataChannel? {
         let config = RTCDataChannelConfiguration()
-        guard let dataChannel = self.peerConnection?.dataChannel(forLabel: channelName, configuration: config) else {
+        guard let dataChannel = self.peerConnection?.dataChannel(forLabel: "WebRTCData", configuration: config) else {
             AntMediaClient.printf("Warning: Couldn't create data channel.")
             return nil
         }
