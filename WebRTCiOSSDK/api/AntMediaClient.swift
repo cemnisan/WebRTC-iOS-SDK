@@ -1446,6 +1446,14 @@ extension AntMediaClient: WebRTCClientDelegate {
             } else {
                 AntMediaClient.printf("Incoming message does not have streamId: \(json)")
             }
+            if (eventType as? String) == "frame-ts" {
+                if let serverTs = json?["serverTimestamp"] as? Int64 {
+                    let clientNow = Int64(Date().timeIntervalSince1970 * 1000)
+                    let estimatedServerNow = clientNow  // sync sonrası
+                    let oneWay = estimatedServerNow - serverTs
+                    print("One-way latency = \(oneWay) ms")
+                }
+            }
         } else {
             self.delegate?.dataReceivedFromDataChannel(streamId: streamId, data: data.data, binary: data.isBinary)
         }

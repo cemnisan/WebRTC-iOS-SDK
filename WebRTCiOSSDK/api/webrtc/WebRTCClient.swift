@@ -424,6 +424,18 @@ class WebRTCClient: NSObject {
         AntMediaClient.printf("disconnected and released resources for \(streamId)")
     }
     
+    public func sendTimestamp() {
+        let ts = Int64(Date().timeIntervalSince1970 * 1000)
+        let json: [String: Any] = ["type": "frame-ts", "serverTimestamp": ts]
+        let data = try! JSONSerialization.data(withJSONObject: json)
+        let buffer = RTCDataBuffer(data: data, isBinary: false)
+        dataChannel?.sendData(buffer)
+        
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            self.sendTimestamp()
+        }
+    }
+
     public func toggleAudioEnabled() {
         self.setAudioEnabled(enabled: !self.audioEnabled)
     }
