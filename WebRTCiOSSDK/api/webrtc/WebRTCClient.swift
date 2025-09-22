@@ -42,6 +42,9 @@ class WebRTCClient: NSObject {
     
     private var frameRenderer: FrameRenderer?
     
+    // Timer for sending timestamp messages
+    private var timestampTimer: Timer?
+    
     /**
      If useExternalCameraSource is false, it opens the local camera
      If it's true, it does not open the local camera. When it's set to true, it can record the screen in-app or you can give external frames through your application or BroadcastExtension. If you give external frames or through BroadcastExtension, you need to set the externalVideoCapture to true as well
@@ -398,6 +401,9 @@ class WebRTCClient: NSObject {
     public func disconnect() {
         AntMediaClient.printf("disconnecting and releasing resources for \(streamId)")
         
+        // Timer'ı durdur
+        stopSendTimestamp()
+        
         if let view = self.localVideoView {
             self.localVideoTrack?.remove(view)
         }
@@ -425,20 +431,51 @@ class WebRTCClient: NSObject {
     }
     
     public func sendTimestamp() {
+        // Eğer timer zaten çalışıyorsa, yeni timer oluşturma
+        guard timestampTimer == nil else {
+            AntMediaClient.printf("Timestamp timer is already running")
+            return
+        }
+        
+        // İlk timestamp'i hemen gönder
+        sendSingleTimestamp()
+        
+        // Timer'ı başlat
+        timestampTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.sendSingleTimestamp()
+        }
+    }
+    
+    private func sendSingleTimestamp() {
         let ts = Int64(Date().timeIntervalSince1970 * 1000)
         let json: [String: Any] = ["type": "frame-ts", "serverTimestamp": ts]
-        let data = try! JSONSerialization.data(withJSONObject: json)
         
-        if dataChannel == nil {
-            dataChannel = createDataChannel()
-            dataChannel?.delegate = self
+        do {
+            let data = try JSONSerialization.data(withJSONObject: json)
+            
+            if dataChannel == nil {
+                dataChannel = createDataChannel()
+                dataChannel?.delegate = self
+            }
+            
+            sendData(data: data)
+            AntMediaClient.printf("Sent timestamp: \(ts)")
+        } catch {
+            AntMediaClient.printf("Error creating timestamp JSON: \(error)")
+        }
+    }
+    
+    public func stopSendTimestamp() {
+        // Timer'ı durdur ve temizle
+        timestampTimer?.invalidate()
+        timestampTimer = nil
+        
+        // Data channel'ı temizle
+        if dataChannel != nil {
+            dataChannel = nil
         }
         
-        sendData(data: data)
-        
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            self.sendTimestamp()
-        }
+        AntMediaClient.printf("Stopped sending timestamps")
     }
 
     public func toggleAudioEnabled() {

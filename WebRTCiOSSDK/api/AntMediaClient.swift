@@ -1098,6 +1098,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 AntMediaClient.printf("Publish finished: Let's close")
                 self.delegate?.publishFinished(streamId: streamId)
                 self.unregisterStatsListener(streamId: streamId)
+                self.webRTCClientMap[streamId]?.stopSendTimestamp()
                 
             } else if definition == JOINED_ROOM_DEFINITION {
                 let streamId = message[STREAM_ID] as! String
@@ -1450,9 +1451,14 @@ extension AntMediaClient: WebRTCClientDelegate {
             if (eventType as? String) == "frame-ts" {
                 if let serverTs = json?["serverTimestamp"] as? Int64 {
                     let clientNow = Int64(Date().timeIntervalSince1970 * 1000)
-                    let estimatedServerNow = clientNow  // sync sonrası
-                    let oneWay = estimatedServerNow - serverTs
-                    print("One-way latency = \(oneWay) ms")
+                    // Round-trip latency hesaplama: client'ın gönderdiği timestamp ile aldığı timestamp arasındaki fark
+                    let roundTripLatency = clientNow - serverTs
+                    print("Round-trip latency = \(roundTripLatency) ms")
+                    
+                    // Eğer negatif değer geliyorsa, bu bir hata olduğunu belirt
+                    if roundTripLatency < 0 {
+                        print("Warning: Negative latency detected. This might indicate a clock synchronization issue.")
+                    }
                 }
             }
         } else {
