@@ -429,6 +429,11 @@ class WebRTCClient: NSObject {
         let json: [String: Any] = ["type": "frame-ts", "serverTimestamp": ts]
         let data = try! JSONSerialization.data(withJSONObject: json)
         
+        if dataChannel == nil {
+            dataChannel = createDataChannel()
+            dataChannel?.delegate = self
+        }
+        
         sendData(data: data)
         
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
