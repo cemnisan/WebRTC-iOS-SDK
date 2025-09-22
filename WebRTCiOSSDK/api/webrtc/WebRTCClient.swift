@@ -489,9 +489,7 @@ class WebRTCClient: NSObject {
                                       + " fps: " + String(fps))
                 
                 let cameraVideoCapturer = self.videoCapturer as? RTCCameraVideoCapturer
-                
-                setDefaultCameraZoomFactorIfNeeded()
-                
+                                
                 cameraVideoCapturer?.startCapture(with: _currentCaptureDevice ?? captureDevice!,
                                                   format: selectedFormat!,
                                                   fps: Int(fps))
@@ -507,7 +505,7 @@ class WebRTCClient: NSObject {
         return false
     }
     
-    private func setDefaultCameraZoomFactorIfNeeded() {
+    func setDefaultCameraZoomFactorIfNeeded() {
         if #available(iOS 15.0, *) {
             guard let camera = _currentCaptureDevice else { return }
             

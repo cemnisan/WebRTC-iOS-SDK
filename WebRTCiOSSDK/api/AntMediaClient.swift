@@ -1091,6 +1091,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 AntMediaClient.printf("Publish started: Let's go")
                 self.webRTCClientMap[streamId]?.setMaxVideoBps(maxVideoBps: self.maxVideoBps)
                 self.delegate?.publishStarted(streamId: message[STREAM_ID] as! String)
+                self.webRTCClientMap[streamId]?.setDefaultCameraZoomFactorIfNeeded()
                 
             } else if definition == "publish_finished" {
                 let streamId = message[STREAM_ID] as! String
