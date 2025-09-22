@@ -27,8 +27,10 @@ class WebRTCClient: NSObject {
     private var videoCapturer: RTCVideoCapturer?
     var localVideoTrack: RTCVideoTrack!
     var localAudioTrack: RTCAudioTrack!
+    
     var remoteVideoTrack: RTCVideoTrack!
     var remoteAudioTrack: RTCAudioTrack!
+    
     var remoteVideoView: RTCVideoRenderer?
     var localVideoView: RTCVideoRenderer?
     var videoSender: RTCRtpSender?
@@ -459,6 +461,7 @@ class WebRTCClient: NSObject {
         return iceConnectionState
     }
     
+    @discardableResult
     private func startCapture() -> Bool {
         if captureDevice != nil {
             let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: captureDevice!)

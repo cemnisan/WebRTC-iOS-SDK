@@ -737,10 +737,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             do {
                 let category = mute ? AVAudioSession.Category.soloAmbient.rawValue : AVAudioSession.Category.playAndRecord.rawValue
                 
-                try self.rtcAudioSession.setCategory(category)
+                //try self.rtcAudioSession.setCategory(category)
                 // playAndRecord category defaults receiver to set to speaker
-                try self.rtcAudioSession.overrideOutputAudioPort(.speaker)
-                try self.rtcAudioSession.setActive(true)
+                //try self.rtcAudioSession.overrideOutputAudioPort(.speaker)
+                //try self.rtcAudioSession.setActive(true)
                 self.webRTCClientMap[self.getPublisherStreamId()]?.setAudioEnabled(enabled: !mute)
                 self.sendNotification(eventType: mute ? EVENT_TYPE_MIC_MUTED : EVENT_TYPE_MIC_UNMUTED)
                 completionHandler(mute, nil)
