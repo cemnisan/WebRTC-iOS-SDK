@@ -431,7 +431,6 @@ class WebRTCClient: NSObject {
     }
     
     public func sendTimestamp() {
-        // Eğer timer zaten çalışıyorsa, yeni timer oluşturma
         guard timestampTimer == nil else {
             AntMediaClient.printf("Timestamp timer is already running")
             return
@@ -448,21 +447,23 @@ class WebRTCClient: NSObject {
     
     private func sendSingleTimestamp() {
         let ts = Int64(Date().timeIntervalSince1970 * 1000)
-        let json: [String: Any] = ["type": "frame-ts", "serverTimestamp": ts]
+        let notif = [
+            EVENT_TYPE: "frame-ts",
+            TIMESTAMP: ts,
+            STREAM_ID: streamId ?? ""
+        ].json
         
-        do {
-            let data = try JSONSerialization.data(withJSONObject: json)
-            
-            if dataChannel == nil {
-                dataChannel = createDataChannel()
-                dataChannel?.delegate = self
-            }
-            
-            sendData(data: data)
-            AntMediaClient.printf("Sent timestamp: \(ts)")
-        } catch {
-            AntMediaClient.printf("Error creating timestamp JSON: \(error)")
+        if dataChannel == nil {
+            dataChannel = createDataChannel()
+            dataChannel?.delegate = self
         }
+        
+        if let data = notif.data(using: .utf8) {
+            sendData(data: data)
+        }
+        
+        
+        AntMediaClient.printf("Sent timestamp: \(ts)")
     }
     
     public func stopSendTimestamp() {
