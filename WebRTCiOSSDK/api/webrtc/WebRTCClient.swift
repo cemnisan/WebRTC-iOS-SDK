@@ -450,7 +450,6 @@ class WebRTCClient: NSObject {
         let notif = [
             EVENT_TYPE: "frame-ts",
             TIMESTAMP: ts,
-            STREAM_ID: streamId ?? ""
         ].json
         
         if dataChannel == nil {
