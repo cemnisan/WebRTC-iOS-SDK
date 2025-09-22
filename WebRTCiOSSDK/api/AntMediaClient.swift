@@ -373,10 +373,6 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         } else {
             sendPublishCommand(streamId)
         }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 200) {
-            self.webRTCClientMap[self.publisherStreamId ?? ""]?.setDefaultCameraZoomFactorIfNeeded()
-        }
     }
     
     public func play(streamId: String, token: String = "") {
@@ -1470,6 +1466,7 @@ extension AntMediaClient: WebSocketDelegate {
             AntMediaClient.printf("websocket is connected: \(headers)")
             self.websocketConnected()
             self.delegate?.clientDidConnect(self)
+            self.webRTCClientMap[self.publisherStreamId ?? ""]?.setDefaultCameraZoomFactorIfNeeded()
 
             // too keep the connetion alive send ping command for every 10 seconds
             pingTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
