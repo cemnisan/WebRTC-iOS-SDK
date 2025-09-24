@@ -58,6 +58,11 @@ class WebRTCClient: NSObject {
     private var frontVideoSender: RTCRtpSender?
     private var backVideoSender: RTCRtpSender?
     
+    // Session management for dual camera
+    private var frontCameraSession: AVCaptureSession?
+    private var backCameraSession: AVCaptureSession?
+    private var sessionQueue: DispatchQueue = DispatchQueue(label: "camera.session.queue")
+    
     private var token: String!
     private var streamId: String!
     
@@ -514,12 +519,7 @@ class WebRTCClient: NSObject {
         
         // Stop dual camera capturers if they exist
         if #available(iOS 15.0, *) {
-            frontVideoCapturer?.stopCapture()
-            backVideoCapturer?.stopCapture()
-            frontVideoCapturer = nil
-            backVideoCapturer = nil
-            frontVideoTrack = nil
-            backVideoTrack = nil
+            cleanupDualCameraResources()
         }
         
         self.videoCapturer = nil
@@ -766,29 +766,38 @@ class WebRTCClient: NSObject {
             return (nil, nil)
         }
         
-        // For now, let's implement a simpler approach: use two separate capturers
-        // This is more reliable than trying to use AVCaptureMultiCamSession with WebRTC
-        
-        // Create front camera track
-        let frontVideoSource = factory.videoSource()
-        self.frontVideoCapturer = RTCCameraVideoCapturer(delegate: frontVideoSource)
-        self.frontVideoTrack = factory.videoTrack(with: frontVideoSource, trackId: "front_video")
-        
-        // Create back camera track  
-        let backVideoSource = factory.videoSource()
-        self.backVideoCapturer = RTCCameraVideoCapturer(delegate: backVideoSource)
-        self.backVideoTrack = factory.videoTrack(with: backVideoSource, trackId: "back_video")
-        
-        // Start individual camera captures
-        let frontCaptureStarted = startFrontCameraCapture()
-        let backCaptureStarted = startBackCameraCapture()
-        
-        if !frontCaptureStarted || !backCaptureStarted {
-            print("Failed to start dual camera capture")
-            return (nil, nil)
+        // Use sequential camera setup to avoid session conflicts
+        return sessionQueue.sync {
+            // Create front camera track first
+            let frontVideoSource = factory.videoSource()
+            self.frontVideoCapturer = RTCCameraVideoCapturer(delegate: frontVideoSource)
+            self.frontVideoTrack = factory.videoTrack(with: frontVideoSource, trackId: "front_video")
+            
+            // Start front camera capture
+            guard startFrontCameraCapture() else {
+                print("Failed to start front camera capture")
+                return (nil, nil)
+            }
+            
+            // Add delay to ensure front camera is fully initialized
+            Thread.sleep(forTimeInterval: 0.1)
+            
+            // Create back camera track
+            let backVideoSource = factory.videoSource()
+            self.backVideoCapturer = RTCCameraVideoCapturer(delegate: backVideoSource)
+            self.backVideoTrack = factory.videoTrack(with: backVideoSource, trackId: "back_video")
+            
+            // Start back camera capture
+            guard startBackCameraCapture() else {
+                print("Failed to start back camera capture")
+                // Clean up front camera if back camera fails
+                self.frontVideoCapturer?.stopCapture()
+                return (nil, nil)
+            }
+            
+            print("Dual camera setup completed successfully")
+            return (self.frontVideoTrack, self.backVideoTrack)
         }
-        
-        return (frontVideoTrack, backVideoTrack)
     }
     
     /// Start front camera capture
@@ -807,6 +816,15 @@ class WebRTCClient: NSObject {
         }
         
         print("Front camera device found: \(frontCamera.localizedName)")
+        
+        // Check if camera is available for use
+        do {
+            try frontCamera.lockForConfiguration()
+            frontCamera.unlockForConfiguration()
+        } catch {
+            print("Front camera is not available: \(error)")
+            return false
+        }
         
         // Start capture with front camera
         let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: frontCamera)
@@ -829,11 +847,18 @@ class WebRTCClient: NSObject {
             }
             let fps = fmin(maxSupportedFramerate, Double(self.cameraSourceFPS))
             
-            frontCapturer.startCapture(with: frontCamera, format: format, fps: Int(fps))
-            print("Front camera capture started")
+            // Start capture on main queue to avoid session conflicts
+            DispatchQueue.main.async {
+                frontCapturer.startCapture(with: frontCamera, format: format, fps: Int(fps))
+                print("Front camera capture started with format: \(format), fps: \(fps)")
+            }
+            
+            // Wait a bit to ensure capture is started
+            Thread.sleep(forTimeInterval: 0.05)
             return true
         }
         
+        print("No suitable format found for front camera")
         return false
     }
     
@@ -853,6 +878,15 @@ class WebRTCClient: NSObject {
         }
         
         print("Back camera device found: \(backCamera.localizedName)")
+        
+        // Check if camera is available for use
+        do {
+            try backCamera.lockForConfiguration()
+            backCamera.unlockForConfiguration()
+        } catch {
+            print("Back camera is not available: \(error)")
+            return false
+        }
         
         // Start capture with back camera
         let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: backCamera)
@@ -875,12 +909,54 @@ class WebRTCClient: NSObject {
             }
             let fps = fmin(maxSupportedFramerate, Double(self.cameraSourceFPS))
             
-            backCapturer.startCapture(with: backCamera, format: format, fps: Int(fps))
-            print("Back camera capture started")
+            // Start capture on main queue to avoid session conflicts
+            DispatchQueue.main.async {
+                backCapturer.startCapture(with: backCamera, format: format, fps: Int(fps))
+                print("Back camera capture started with format: \(format), fps: \(fps)")
+            }
+            
+            // Wait a bit to ensure capture is started
+            Thread.sleep(forTimeInterval: 0.05)
             return true
         }
         
+        print("No suitable format found for back camera")
         return false
+    }
+    
+    /// Clean up dual camera resources properly
+    @available(iOS 15.0, *)
+    private func cleanupDualCameraResources() {
+        sessionQueue.async {
+            print("Cleaning up dual camera resources...")
+            
+            // Stop captures on main queue
+            DispatchQueue.main.sync {
+                self.frontVideoCapturer?.stopCapture()
+                self.backVideoCapturer?.stopCapture()
+            }
+            
+            // Remove video tracks from views
+            if let frontTrack = self.frontVideoTrack, let localView = self.localVideoView {
+                frontTrack.remove(localView)
+            }
+            
+            if let backTrack = self.backVideoTrack, let localView = self.localVideoView {
+                backTrack.remove(localView)
+            }
+            
+            // Clear references
+            self.frontVideoCapturer = nil
+            self.backVideoCapturer = nil
+            self.frontVideoTrack = nil
+            self.backVideoTrack = nil
+            self.frontVideoSender = nil
+            self.backVideoSender = nil
+            self.frontCameraSession = nil
+            self.backCameraSession = nil
+            
+            print("Dual camera resources cleaned up")
+        }
     }
     
     
@@ -1021,6 +1097,31 @@ class WebRTCClient: NSObject {
             print("Main local view set to front camera track")
         } else {
             print("Front camera track is nil, cannot set main local view")
+        }
+    }
+    
+    /// Restart front camera if it's frozen (public method for external use)
+    @available(iOS 15.0, *)
+    public func restartFrontCameraIfNeeded() {
+        guard cameraMode == .dualCamera else { return }
+        
+        sessionQueue.async {
+            print("Attempting to restart front camera...")
+            
+            // Stop current front camera
+            self.frontVideoCapturer?.stopCapture()
+            
+            // Wait a moment
+            Thread.sleep(forTimeInterval: 0.1)
+            
+            // Restart front camera
+            DispatchQueue.main.async {
+                if self.startFrontCameraCapture() {
+                    print("Front camera restarted successfully")
+                } else {
+                    print("Failed to restart front camera")
+                }
+            }
         }
     }
     
