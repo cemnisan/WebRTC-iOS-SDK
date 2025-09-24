@@ -829,8 +829,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         // Connect tracks to views
         let streamId = getPublisherStreamId()
         if let client = webRTCClientMap[streamId] {
-            client.setLocalViewForCamera(.frontOnly, view: frontRenderer)
-            client.setLocalViewForCamera(.backOnly, view: backRenderer)
+            // Use the new dual camera views method
+            client.setDualCameraViews(frontView: frontRenderer, backView: backRenderer)
         }
         
         print("Dual local views set successfully")

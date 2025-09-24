@@ -1025,13 +1025,9 @@ class WebRTCClient: NSObject {
         
         // Add video track to local view
         if cameraMode == .dualCamera {
-            // For dual camera mode, add front camera to local view
+            // For dual camera mode, tracks will be added to views when setDualLocalViews is called
             if #available(iOS 15.0, *) {
-                if let localView = self.localVideoView {
-                    setMainLocalView(localView)
-                } else {
-                    print("Local view is nil for dual camera mode")
-                }
+                print("Dual camera tracks created, waiting for views to be set")
             }
         } else {
             // For single camera mode
@@ -1074,18 +1070,42 @@ class WebRTCClient: NSObject {
             if let frontTrack = frontVideoTrack {
                 frontTrack.add(view)
                 print("Front camera track added to local view")
+            } else {
+                print("Front track is nil when trying to add to view")
             }
         case .backOnly:
             if let backTrack = backVideoTrack {
                 backTrack.add(view)
                 print("Back camera track added to local view")
+            } else {
+                print("Back track is nil when trying to add to view")
             }
         case .dualCamera:
             // For dual camera, default to front camera
             if let frontTrack = frontVideoTrack {
                 frontTrack.add(view)
                 print("Front camera track added to local view (dual camera mode)")
+            } else {
+                print("Front track is nil when trying to add to dual camera view")
             }
+        }
+    }
+    
+    /// Set views for both cameras in dual camera mode
+    @available(iOS 15.0, *)
+    public func setDualCameraViews(frontView: RTCVideoRenderer, backView: RTCVideoRenderer) {
+        if let frontTrack = frontVideoTrack {
+            frontTrack.add(frontView)
+            print("Front camera track added to front view")
+        } else {
+            print("Front track is nil when setting dual views")
+        }
+        
+        if let backTrack = backVideoTrack {
+            backTrack.add(backView)
+            print("Back camera track added to back view")
+        } else {
+            print("Back track is nil when setting dual views")
         }
     }
     
