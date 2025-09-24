@@ -787,6 +787,47 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         AntMediaClient.printf("Dual remote views set successfully")
     }
     
+    /// Set local view for dual camera mode
+    @available(iOS 15.0, *)
+    open func setDualLocalViews(
+        frontContainer: UIView,
+        backContainer: UIView,
+        mode: UIView.ContentMode = .scaleAspectFit
+    ) {
+        // Create front camera local view
+        #if arch(arm64)
+        let frontRenderer = RTCMTLVideoView(frame: frontContainer.frame)
+        frontRenderer.videoContentMode = mode
+        #else
+        let frontRenderer = RTCEAGLVideoView(frame: frontContainer.frame)
+        frontRenderer.delegate = self
+        #endif
+        
+        frontRenderer.frame = frontContainer.bounds
+        AntMediaClient.embedView(frontRenderer, into: frontContainer)
+        
+        // Create back camera local view
+        #if arch(arm64)
+        let backRenderer = RTCMTLVideoView(frame: backContainer.frame)
+        backRenderer.videoContentMode = mode
+        #else
+        let backRenderer = RTCEAGLVideoView(frame: backContainer.frame)
+        backRenderer.delegate = self
+        #endif
+        
+        backRenderer.frame = backContainer.bounds
+        AntMediaClient.embedView(backRenderer, into: backContainer)
+        
+        // Connect tracks to views
+        let streamId = getPublisherStreamId()
+        if let client = webRTCClientMap[streamId] {
+            client.setLocalViewForCamera(.frontOnly, view: frontRenderer)
+            client.setLocalViewForCamera(.backOnly, view: backRenderer)
+        }
+        
+        AntMediaClient.printf("Dual local views set successfully")
+    }
+    
     open func disableTrack(trackId: String) {
         self.disableTrackId = trackId
     }

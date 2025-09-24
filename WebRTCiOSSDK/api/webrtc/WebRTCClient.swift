@@ -947,9 +947,20 @@ class WebRTCClient: NSObject {
         
         self.peerConnection?.add(self.localAudioTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
         
-        // Add video track to local view (for single camera mode)
-        if self.localVideoTrack != nil && self.localVideoView != nil {
-            self.localVideoTrack.add(localVideoView!)
+        // Add video track to local view
+        if cameraMode == .dualCamera {
+            // For dual camera mode, add front camera to local view
+            if #available(iOS 15.0, *) {
+                if self.frontVideoTrack != nil && self.localVideoView != nil {
+                    self.frontVideoTrack?.add(localVideoView!)
+                    AntMediaClient.printf("Front camera track added to local view")
+                }
+            }
+        } else {
+            // For single camera mode
+            if self.localVideoTrack != nil && self.localVideoView != nil {
+                self.localVideoTrack.add(localVideoView!)
+            }
         }
         
         self.delegate?.addLocalStream(streamId: self.streamId)
@@ -962,6 +973,40 @@ class WebRTCClient: NSObject {
     
     public func getLocalAudioTrack() -> RTCAudioTrack {
         return self.localAudioTrack
+    }
+    
+    // MARK: - Dual Camera Track Access
+    
+    @available(iOS 15.0, *)
+    public func getFrontVideoTrack() -> RTCVideoTrack? {
+        return self.frontVideoTrack
+    }
+    
+    @available(iOS 15.0, *)
+    public func getBackVideoTrack() -> RTCVideoTrack? {
+        return self.backVideoTrack
+    }
+    
+    @available(iOS 15.0, *)
+    public func setLocalViewForCamera(_ camera: CameraMode, view: RTCVideoRenderer) {
+        switch camera {
+        case .frontOnly:
+            if let frontTrack = frontVideoTrack {
+                frontTrack.add(view)
+                AntMediaClient.printf("Front camera track added to local view")
+            }
+        case .backOnly:
+            if let backTrack = backVideoTrack {
+                backTrack.add(view)
+                AntMediaClient.printf("Back camera track added to local view")
+            }
+        case .dualCamera:
+            // For dual camera, default to front camera
+            if let frontTrack = frontVideoTrack {
+                frontTrack.add(view)
+                AntMediaClient.printf("Front camera track added to local view (dual camera mode)")
+            }
+        }
     }
     
     public func setDegradationPreference(degradationPreference: RTCDegradationPreference) {
@@ -1066,14 +1111,26 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
                 if track.trackId == "front_video" {
                     // Handle front camera track
                     AntMediaClient.printf("Front camera track received")
-                    // Add to front view if available
+                    if remoteVideoView != nil {
+                        remoteVideoTrack = track
+                        remoteVideoTrack.add(remoteVideoView!)
+                        renderRemoteVideo(to: remoteVideoView!)
+                        AntMediaClient.printf("Front camera track added to remote view")
+                    }
                 } else if track.trackId == "back_video" {
                     // Handle back camera track
                     AntMediaClient.printf("Back camera track received")
-                    // Add to back view if available
+                    // For now, we'll use the first track (front) for the main view
+                    // In a full implementation, you'd have separate views for each camera
                 } else {
                     // Handle other video tracks
                     AntMediaClient.printf("Other video track received: \(track.trackId)")
+                    // Use the first available track as fallback
+                    if remoteVideoView != nil && remoteVideoTrack == nil {
+                        remoteVideoTrack = track
+                        remoteVideoTrack.add(remoteVideoView!)
+                        renderRemoteVideo(to: remoteVideoView!)
+                    }
                 }
             }
         }
