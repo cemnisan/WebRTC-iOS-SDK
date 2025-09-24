@@ -43,7 +43,14 @@ class WebRTCClient: NSObject {
     
     // MARK: - Dual Camera Support
     private var cameraMode: CameraMode = .frontOnly
-    private var multiCamSession: AVCaptureMultiCamSession?
+    
+    @available(iOS 13.0, *)
+    var multiCamSession: AVCaptureMultiCamSession? { // use this as a getter for what you want
+       return _multiCamSession as? AVCaptureMultiCamSession
+    }
+    
+    private var _multiCamSession: Any?
+    
     private var frontVideoCapturer: RTCCameraVideoCapturer?
     private var backVideoCapturer: RTCCameraVideoCapturer?
     private var frontVideoTrack: RTCVideoTrack?
@@ -777,7 +784,7 @@ class WebRTCClient: NSObject {
         }
         
         // Create multi-cam session
-        self.multiCamSession = AVCaptureMultiCamSession()
+        self._multiCamSession = AVCaptureMultiCamSession()
         
         // Get front and back camera devices
         guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
