@@ -81,8 +81,11 @@ open class ConferenceViewController: UIViewController ,  AVCaptureVideoDataOutpu
 }
 
 
-extension ConferenceViewController: AntMediaClientDelegate
-{
+extension ConferenceViewController: AntMediaClientDelegate {
+    public func didCameraCapturedPhoto(capturedPhoto photo: UIImage) {
+        
+    }
+    
     public func clientHasError(_ message: String) {
         
     }

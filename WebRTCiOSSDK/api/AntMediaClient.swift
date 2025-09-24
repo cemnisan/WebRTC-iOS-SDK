@@ -81,6 +81,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     private var localView: RTCVideoRenderer?
     private var remoteView: RTCVideoRenderer?
     
+    // MARK: - Dual Camera Support Properties
+    private var cameraMode: CameraMode = .frontOnly
+    private var frontRemoteView: RTCVideoRenderer?
+    private var backRemoteView: RTCVideoRenderer?
+    
     private var videoContentMode: UIView.ContentMode?
     
     private let dispatchQueue = DispatchQueue(label: "audio")
@@ -161,6 +166,39 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         self.enableDataChannel = enableDataChannel
         self.useExternalCameraSource = useExternalCameraSource
+    }
+    
+    // MARK: - Enhanced setOptions with Camera Mode Support
+    @available(iOS 15.0, *)
+    public func setOptions(
+        url: String, 
+        streamId: String, 
+        token: String = "", 
+        mode: AntMediaClientMode = .join, 
+        enableDataChannel: Bool = false, 
+        useExternalCameraSource: Bool = false,
+        cameraMode: CameraMode = .frontOnly
+    ) {
+        self.wsUrl = url
+        self.mode = mode
+        self.cameraMode = cameraMode
+        
+        if mode == AntMediaClientMode.publish {
+            self.publisherStreamId = streamId
+            self.publishToken = token
+            
+        } else if mode == AntMediaClientMode.play {
+            self.playerStreamId = streamId
+            self.playToken = token
+            
+        } else if mode == AntMediaClientMode.join {
+            self.p2pStreamId = streamId
+        }
+        
+        self.enableDataChannel = enableDataChannel
+        self.useExternalCameraSource = useExternalCameraSource
+        
+        AntMediaClient.printf("Options set with camera mode: \(cameraMode)")
     }
     
     public func setWebSocketServerUrl(url: String) {
@@ -487,22 +525,58 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         if self.webRTCClientMap[id] == nil {
             AntMediaClient.printf("Has wsClient? (start) : \(String(describing: self.webRTCClientMap[id]))")
             
-            self.webRTCClientMap[id] = WebRTCClient(
-                remoteVideoView: remoteView,
-                localVideoView: localView,
-                delegate: self,
-                cameraPosition: self.cameraPosition,
-                targetWidth: self.targetWidth,
-                targetHeight: self.targetHeight,
-                videoEnabled: self.videoEnable,
-                enableDataChannel: self.enableDataChannel,
-                useExternalCameraSource: self.useExternalCameraSource,
-                externalAudio: self.externalAudioEnabled,
-                externalVideoCapture: self.externalVideoCapture,
-                cameraSourceFPS: self.cameraSourceFPS,
-                streamId: id,
-                degradationPreference: self.degradationPreference
-            )
+            // Create WebRTC client with appropriate camera mode
+            if cameraMode == .dualCamera {
+                if #available(iOS 15.0, *) {
+                    // Use new dual camera init
+                    self.webRTCClientMap[id] = WebRTCClient(
+                        remoteVideoView: remoteView,
+                        localVideoView: localView,
+                        delegate: self,
+                        cameraMode: self.cameraMode,
+                        targetWidth: self.targetWidth,
+                        targetHeight: self.targetHeight,
+                        streamId: id
+                    )
+                } else {
+                    AntMediaClient.printf("Dual camera requires iOS 15.0 or later, falling back to single camera")
+                    // Fallback to single camera
+                    self.webRTCClientMap[id] = WebRTCClient(
+                        remoteVideoView: remoteView,
+                        localVideoView: localView,
+                        delegate: self,
+                        cameraPosition: self.cameraPosition,
+                        targetWidth: self.targetWidth,
+                        targetHeight: self.targetHeight,
+                        videoEnabled: self.videoEnable,
+                        enableDataChannel: self.enableDataChannel,
+                        useExternalCameraSource: self.useExternalCameraSource,
+                        externalAudio: self.externalAudioEnabled,
+                        externalVideoCapture: self.externalVideoCapture,
+                        cameraSourceFPS: self.cameraSourceFPS,
+                        streamId: id,
+                        degradationPreference: self.degradationPreference
+                    )
+                }
+            } else {
+                // Use existing single camera init
+                self.webRTCClientMap[id] = WebRTCClient(
+                    remoteVideoView: remoteView,
+                    localVideoView: localView,
+                    delegate: self,
+                    cameraPosition: self.cameraPosition,
+                    targetWidth: self.targetWidth,
+                    targetHeight: self.targetHeight,
+                    videoEnabled: self.videoEnable,
+                    enableDataChannel: self.enableDataChannel,
+                    useExternalCameraSource: self.useExternalCameraSource,
+                    externalAudio: self.externalAudioEnabled,
+                    externalVideoCapture: self.externalVideoCapture,
+                    cameraSourceFPS: self.cameraSourceFPS,
+                    streamId: id,
+                    degradationPreference: self.degradationPreference
+                )
+            }
             
             if self.mode != .play {
                 self.webRTCClientMap[id]?.addLocalMediaStream()
@@ -648,6 +722,69 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.remoteView = remoteRenderer
         self.remoteContainerBounds = remoteContainer.bounds
         AntMediaClient.embedView(remoteRenderer, into: remoteContainer)
+    }
+    
+    // MARK: - Dual Camera Support
+    
+    /// Set dual camera mode for WebRTC client
+    @available(iOS 15.0, *)
+    open func setCameraMode(_ mode: CameraMode) {
+        self.cameraMode = mode
+        
+        // Update all existing WebRTC clients
+        for (_, client) in webRTCClientMap {
+            client.setCameraMode(mode)
+        }
+        
+        AntMediaClient.printf("Camera mode set to: \(mode)")
+    }
+    
+    /// Get current camera mode
+    @available(iOS 15.0, *)
+    open func getCameraMode() -> CameraMode {
+        return self.cameraMode
+    }
+    
+    /// Check if device supports multi-camera
+    @available(iOS 15.0, *)
+    open func isMultiCamSupported() -> Bool {
+        return WebRTCClient.isMultiCamSupported()
+    }
+    
+    /// Set dual remote views for front and back camera
+    @available(iOS 15.0, *)
+    open func setDualRemoteViews(
+        frontContainer: UIView,
+        backContainer: UIView,
+        mode: UIView.ContentMode = .scaleAspectFit
+    ) {
+        // Create front camera view
+        #if arch(arm64)
+        let frontRenderer = RTCMTLVideoView(frame: frontContainer.frame)
+        frontRenderer.videoContentMode = mode
+        #else
+        let frontRenderer = RTCEAGLVideoView(frame: frontContainer.frame)
+        frontRenderer.delegate = self
+        #endif
+        
+        frontRenderer.frame = frontContainer.bounds
+        self.frontRemoteView = frontRenderer
+        AntMediaClient.embedView(frontRenderer, into: frontContainer)
+        
+        // Create back camera view
+        #if arch(arm64)
+        let backRenderer = RTCMTLVideoView(frame: backContainer.frame)
+        backRenderer.videoContentMode = mode
+        #else
+        let backRenderer = RTCEAGLVideoView(frame: backContainer.frame)
+        backRenderer.delegate = self
+        #endif
+        
+        backRenderer.frame = backContainer.bounds
+        self.backRemoteView = backRenderer
+        AntMediaClient.embedView(backRenderer, into: backContainer)
+        
+        AntMediaClient.printf("Dual remote views set successfully")
     }
     
     open func disableTrack(trackId: String) {

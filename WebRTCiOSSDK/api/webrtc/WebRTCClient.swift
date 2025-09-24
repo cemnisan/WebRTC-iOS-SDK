@@ -10,6 +10,13 @@ import AVFoundation
 import WebRTC
 import ReplayKit
 
+// MARK: - Camera Mode Enum
+public enum CameraMode {
+    case frontOnly
+    case backOnly
+    case dualCamera
+}
+
 class WebRTCClient: NSObject {
     
     let VIDEO_TRACK_ID = "VIDEO"
@@ -33,6 +40,16 @@ class WebRTCClient: NSObject {
     var localVideoView: RTCVideoRenderer?
     var videoSender: RTCRtpSender?
     var dataChannel: RTCDataChannel?
+    
+    // MARK: - Dual Camera Support
+    private var cameraMode: CameraMode = .frontOnly
+    private var multiCamSession: AVCaptureMultiCamSession?
+    private var frontVideoCapturer: RTCCameraVideoCapturer?
+    private var backVideoCapturer: RTCCameraVideoCapturer?
+    private var frontVideoTrack: RTCVideoTrack?
+    private var backVideoTrack: RTCVideoTrack?
+    private var frontVideoSender: RTCRtpSender?
+    private var backVideoSender: RTCRtpSender?
     
     private var token: String!
     private var streamId: String!
@@ -87,6 +104,35 @@ class WebRTCClient: NSObject {
         }
     }
     
+    // MARK: - Dual Camera Support Methods
+    
+    /// Check if device supports multi-camera capture
+    @available(iOS 15.0, *)
+    public static func isMultiCamSupported() -> Bool {
+        return AVCaptureMultiCamSession.isMultiCamSupported
+    }
+    
+    /// Set camera mode
+    @available(iOS 15.0, *)
+    public func setCameraMode(_ mode: CameraMode) {
+        self.cameraMode = mode
+        
+        switch mode {
+        case .frontOnly:
+            self.cameraPosition = .front
+        case .backOnly:
+            self.cameraPosition = .back
+        case .dualCamera:
+            self.cameraPosition = .front // Default for dual camera
+        }
+    }
+    
+    /// Get current camera mode
+    @available(iOS 15.0, *)
+    public func getCameraMode() -> CameraMode {
+        return self.cameraMode
+    }
+    
     var _currentCaptureDevice: AVCaptureDevice?
 
     public init(remoteVideoView: RTCVideoRenderer?, localVideoView: RTCVideoRenderer?, delegate: WebRTCClientDelegate, externalAudio: Bool) {
@@ -137,6 +183,42 @@ class WebRTCClient: NSObject {
                   enableDataChannel: false,
                   streamId: streamId
         )
+    }
+    
+    // MARK: - New Init with Camera Mode Support
+    @available(iOS 15.0, *)
+    public convenience init(
+        remoteVideoView: RTCVideoRenderer?,
+        localVideoView: RTCVideoRenderer?,
+        delegate: WebRTCClientDelegate,
+        cameraMode: CameraMode,
+        targetWidth: Int,
+        targetHeight: Int,
+        streamId: String
+    ) {
+        self.init(remoteVideoView: remoteVideoView,
+                  localVideoView: localVideoView,
+                  delegate: delegate,
+                  cameraPosition: .front, // Will be set based on cameraMode
+                  targetWidth: targetWidth,
+                  targetHeight: targetHeight,
+                  videoEnabled: true,
+                  enableDataChannel: false,
+                  useExternalCameraSource: false,
+                  streamId: streamId
+        )
+        
+        self.cameraMode = cameraMode
+        
+        // Set camera position based on mode
+        switch cameraMode {
+        case .frontOnly:
+            self.cameraPosition = .front
+        case .backOnly:
+            self.cameraPosition = .back
+        case .dualCamera:
+            self.cameraPosition = .front // Default for dual camera
+        }
     }
     
     public convenience init(
@@ -657,18 +739,129 @@ class WebRTCClient: NSObject {
         }
     }
     
+    // MARK: - Dual Camera Video Track Creation
+    
+    /// Create dual camera video tracks
+    @available(iOS 15.0, *)
+    private func createDualCameraVideoTracks() -> (frontTrack: RTCVideoTrack?, backTrack: RTCVideoTrack?) {
+        guard WebRTCClient.isMultiCamSupported() else {
+            AntMediaClient.printf("Multi-camera not supported on this device")
+            return (nil, nil)
+        }
+        
+        // Create front camera track
+        let frontVideoSource = factory.videoSource()
+        self.frontVideoCapturer = RTCCameraVideoCapturer(delegate: frontVideoSource)
+        self.frontVideoTrack = factory.videoTrack(with: frontVideoSource, trackId: "front_video")
+        
+        // Create back camera track
+        let backVideoSource = factory.videoSource()
+        self.backVideoCapturer = RTCCameraVideoCapturer(delegate: backVideoSource)
+        self.backVideoTrack = factory.videoTrack(with: backVideoSource, trackId: "back_video")
+        
+        // Start dual camera capture
+        let captureStarted = startDualCameraCapture()
+        if !captureStarted {
+            AntMediaClient.printf("Failed to start dual camera capture")
+            return (nil, nil)
+        }
+        
+        return (frontVideoTrack, backVideoTrack)
+    }
+    
+    /// Start dual camera capture using AVCaptureMultiCamSession
+    @available(iOS 15.0, *)
+    private func startDualCameraCapture() -> Bool {
+        guard WebRTCClient.isMultiCamSupported() else {
+            return false
+        }
+        
+        // Create multi-cam session
+        self.multiCamSession = AVCaptureMultiCamSession()
+        
+        // Get front and back camera devices
+        guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
+              let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            AntMediaClient.printf("Could not get front or back camera")
+            return false
+        }
+        
+        do {
+            // Create inputs
+            let frontInput = try AVCaptureDeviceInput(device: frontCamera)
+            let backInput = try AVCaptureDeviceInput(device: backCamera)
+            
+            // Add inputs to session
+            if multiCamSession!.canAddInput(frontInput) {
+                multiCamSession!.addInput(frontInput)
+            }
+            
+            if multiCamSession!.canAddInput(backInput) {
+                multiCamSession!.addInput(backInput)
+            }
+            
+            // Start session
+            multiCamSession!.startRunning()
+            
+            AntMediaClient.printf("Dual camera session started successfully")
+            return true
+            
+        } catch {
+            AntMediaClient.printf("Error setting up dual camera: \(error)")
+            return false
+        }
+    }
+    
     public func addLocalMediaStream() -> Bool {
         AntMediaClient.printf("Add local media streams")
         if self.videoEnabled {
-            self.localVideoTrack = createVideoTrack()
-            
-            self.videoSender = self.peerConnection?.add(self.localVideoTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
-            
-            if let params = videoSender?.parameters {
-                params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
-                videoSender?.parameters = params
-            } else {
-                AntMediaClient.printf("DegradationPreference cannot be set")
+            switch cameraMode {
+            case .frontOnly, .backOnly:
+                // Single camera mode (existing behavior)
+                self.localVideoTrack = createVideoTrack()
+                
+                self.videoSender = self.peerConnection?.add(self.localVideoTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
+                
+                if let params = videoSender?.parameters {
+                    params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
+                    videoSender?.parameters = params
+                } else {
+                    AntMediaClient.printf("DegradationPreference cannot be set")
+                }
+                
+            case .dualCamera:
+                // Dual camera mode
+                if #available(iOS 15.0, *) {
+                    let (frontTrack, backTrack) = createDualCameraVideoTracks()
+                    
+                    if let frontTrack = frontTrack, let backTrack = backTrack {
+                        self.frontVideoTrack = frontTrack
+                        self.backVideoTrack = backTrack
+                        
+                        // Add both tracks to peer connection
+                        self.frontVideoSender = self.peerConnection?.add(frontTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
+                        self.backVideoSender = self.peerConnection?.add(backTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
+                        
+                        // Set degradation preference for both tracks
+                        if let frontParams = frontVideoSender?.parameters {
+                            frontParams.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
+                            frontVideoSender?.parameters = frontParams
+                        }
+                        
+                        if let backParams = backVideoSender?.parameters {
+                            backParams.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
+                            backVideoSender?.parameters = backParams
+                        }
+                        
+                        AntMediaClient.printf("Dual camera tracks added successfully")
+                    } else {
+                        AntMediaClient.printf("Failed to create dual camera tracks")
+                        return false
+                    }
+                } else {
+                    AntMediaClient.printf("Dual camera requires iOS 15.0 or later")
+                    return false
+                }
             }
         }
         
@@ -677,6 +870,7 @@ class WebRTCClient: NSObject {
         
         self.peerConnection?.add(self.localAudioTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
         
+        // Add video track to local view (for single camera mode)
         if self.localVideoTrack != nil && self.localVideoView != nil {
             self.localVideoTrack.add(localVideoView!)
         }
@@ -773,15 +967,37 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
         AntMediaClient.printf("addedStream. Stream has \(stream.videoTracks.count) video tracks and \(stream.audioTracks.count) audio tracks")
         
         if stream.videoTracks.count == 1 {
-            AntMediaClient.printf("stream has video track")
+            // Single video track (existing behavior)
+            AntMediaClient.printf("stream has single video track")
             if remoteVideoView != nil {
                 remoteVideoTrack = stream.videoTracks[0]
                 
-                // remoteVideoTrack.setEnabled(true)
                 remoteVideoTrack.add(remoteVideoView!)
                 renderRemoteVideo(to: remoteVideoView!)
                 
                 AntMediaClient.printf("Has delegate??? (signalingStateChanged): \(String(describing: self.delegate))")
+            }
+        } else if stream.videoTracks.count > 1 {
+            // Multiple video tracks (dual camera support)
+            AntMediaClient.printf("stream has multiple video tracks: \(stream.videoTracks.count)")
+            
+            // Handle multiple video tracks
+            for (index, track) in stream.videoTracks.enumerated() {
+                AntMediaClient.printf("Processing video track \(index) with ID: \(track.trackId)")
+                
+                // You can identify tracks by their trackId
+                if track.trackId == "front_video" {
+                    // Handle front camera track
+                    AntMediaClient.printf("Front camera track received")
+                    // Add to front view if available
+                } else if track.trackId == "back_video" {
+                    // Handle back camera track
+                    AntMediaClient.printf("Back camera track received")
+                    // Add to back view if available
+                } else {
+                    // Handle other video tracks
+                    AntMediaClient.printf("Other video track received: \(track.trackId)")
+                }
             }
         }
         
