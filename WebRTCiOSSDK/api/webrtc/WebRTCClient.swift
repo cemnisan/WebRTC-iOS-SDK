@@ -306,9 +306,9 @@ class WebRTCClient: NSObject {
     }
     
     public func setMaxVideoBps(maxVideoBps: NSNumber) {
-        AntMediaClient.printf("In setMaxVideoBps:\(maxVideoBps)")
+        print("In setMaxVideoBps:\(maxVideoBps)")
         if maxVideoBps.intValue > 0 {
-            AntMediaClient.printf("setMaxVideoBps:\(maxVideoBps)")
+            print("setMaxVideoBps:\(maxVideoBps)")
             self.peerConnection?.setBweMinBitrateBps(nil, currentBitrateBps: nil, maxBitrateBps: maxVideoBps)
         }
     }
@@ -338,7 +338,7 @@ class WebRTCClient: NSObject {
             let dataBuffer = RTCDataBuffer(data: data, isBinary: binary)
             self.dataChannel?.sendData(dataBuffer)
         } else {
-            AntMediaClient.printf("Data channel is nil or state is not open. State is \(String(describing: self.dataChannel?.readyState)) Please check that data channel is enabled in server side ")
+            print("Data channel is nil or state is not open. State is \(String(describing: self.dataChannel?.readyState)) Please check that data channel is enabled in server side ")
         }
     }
     
@@ -401,13 +401,13 @@ class WebRTCClient: NSObject {
         let constraint = Config.createAudioVideoConstraints()
         self.peerConnection?.answer(for: constraint, completionHandler: { sdp, error in
             if error != nil {
-                AntMediaClient.printf("Error (sendAnswer): " + error!.localizedDescription)
+                print("Error (sendAnswer): " + error!.localizedDescription)
             } else {
-                AntMediaClient.printf("Got your answer")
+                print("Got your answer")
                 if sdp?.type == RTCSdpType.answer {
                     self.peerConnection?.setLocalDescription(sdp!, completionHandler: { error in
                         if error != nil {
-                            AntMediaClient.printf("Error (sendAnswer/closure): " + error!.localizedDescription)
+                            print("Error (sendAnswer/closure): " + error!.localizedDescription)
                         }
                     })
                     
@@ -445,15 +445,15 @@ class WebRTCClient: NSObject {
         
         self.peerConnection?.offer(for: constraint, completionHandler: { sdp, error in
             if sdp?.type == RTCSdpType.offer {
-                AntMediaClient.printf("Got your offer")
+                print("Got your offer")
                 
                 self.peerConnection?.setLocalDescription(sdp!, completionHandler: { error in
                     if error != nil {
-                        AntMediaClient.printf("Error (createOffer): " + error!.localizedDescription)
+                        print("Error (createOffer): " + error!.localizedDescription)
                     }
                 })
                 
-                AntMediaClient.printf("offer sdp: " + sdp!.sdp)
+                print("offer sdp: " + sdp!.sdp)
                 var offerDict = [String: Any]()
                 
                 if self.token.isEmpty {
@@ -481,14 +481,14 @@ class WebRTCClient: NSObject {
     private func createDataChannel() -> RTCDataChannel? {
         let config = RTCDataChannelConfiguration()
         guard let dataChannel = self.peerConnection?.dataChannel(forLabel: "WebRTCData", configuration: config) else {
-            AntMediaClient.printf("Warning: Couldn't create data channel.")
+            print("Warning: Couldn't create data channel.")
             return nil
         }
         return dataChannel
     }
     
     public func disconnect() {
-        AntMediaClient.printf("disconnecting and releasing resources for \(streamId)")
+        print("disconnecting and releasing resources for \(streamId)")
         
         // Timer'ı durdur
         stopSendTimestamp()
@@ -526,12 +526,12 @@ class WebRTCClient: NSObject {
         
         self.peerConnection?.close()
         self.peerConnection = nil
-        AntMediaClient.printf("disconnected and released resources for \(streamId)")
+        print("disconnected and released resources for \(streamId)")
     }
     
     public func sendTimestamp() {
         guard timestampTimer == nil else {
-            AntMediaClient.printf("Timestamp timer is already running")
+            print("Timestamp timer is already running")
             return
         }
         
@@ -561,7 +561,7 @@ class WebRTCClient: NSObject {
         }
         
         
-        AntMediaClient.printf("Sent timestamp: \(ts)")
+        print("Sent timestamp: \(ts)")
     }
     
     public func stopSendTimestamp() {
@@ -574,7 +574,7 @@ class WebRTCClient: NSObject {
             dataChannel = nil
         }
         
-        AntMediaClient.printf("Stopped sending timestamps")
+        print("Stopped sending timestamps")
     }
 
     public func toggleAudioEnabled() {
@@ -639,7 +639,7 @@ class WebRTCClient: NSObject {
                 
                 let dimension = CMVideoFormatDescriptionGetDimensions(selectedFormat!.formatDescription)
                 
-                AntMediaClient.printf("Camera resolution: " + String(dimension.width) + "x" + String(dimension.height)
+                print("Camera resolution: " + String(dimension.width) + "x" + String(dimension.height)
                                       + " fps: " + String(fps))
                 
                 let cameraVideoCapturer = self.videoCapturer as? RTCCameraVideoCapturer
@@ -650,10 +650,10 @@ class WebRTCClient: NSObject {
                                 
                 return true
             } else {
-                AntMediaClient.printf("Cannot open camera not suitable format")
+                print("Cannot open camera not suitable format")
             }
         } else {
-            AntMediaClient.printf("Not Camera Found")
+            print("Not Camera Found")
         }
         
         return false
@@ -762,7 +762,7 @@ class WebRTCClient: NSObject {
     @available(iOS 15.0, *)
     private func createDualCameraVideoTracks() -> (frontTrack: RTCVideoTrack?, backTrack: RTCVideoTrack?) {
         guard WebRTCClient.isMultiCamSupported() else {
-            AntMediaClient.printf("Multi-camera not supported on this device")
+            print("Multi-camera not supported on this device")
             return (nil, nil)
         }
         
@@ -784,7 +784,7 @@ class WebRTCClient: NSObject {
         let backCaptureStarted = startBackCameraCapture()
         
         if !frontCaptureStarted || !backCaptureStarted {
-            AntMediaClient.printf("Failed to start dual camera capture")
+            print("Failed to start dual camera capture")
             return (nil, nil)
         }
         
@@ -794,19 +794,19 @@ class WebRTCClient: NSObject {
     /// Start front camera capture
     @available(iOS 15.0, *)
     private func startFrontCameraCapture() -> Bool {
-        AntMediaClient.printf("Starting front camera capture...")
+        print("Starting front camera capture...")
         guard let frontCapturer = frontVideoCapturer else {
-            AntMediaClient.printf("Front capturer is nil")
+            print("Front capturer is nil")
             return false
         }
         
         // Get front camera device
         guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else {
-            AntMediaClient.printf("Could not get front camera")
+            print("Could not get front camera")
             return false
         }
         
-        AntMediaClient.printf("Front camera device found: \(frontCamera.localizedName)")
+        print("Front camera device found: \(frontCamera.localizedName)")
         
         // Start capture with front camera
         let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: frontCamera)
@@ -830,7 +830,7 @@ class WebRTCClient: NSObject {
             let fps = fmin(maxSupportedFramerate, Double(self.cameraSourceFPS))
             
             frontCapturer.startCapture(with: frontCamera, format: format, fps: Int(fps))
-            AntMediaClient.printf("Front camera capture started")
+            print("Front camera capture started")
             return true
         }
         
@@ -840,19 +840,19 @@ class WebRTCClient: NSObject {
     /// Start back camera capture
     @available(iOS 15.0, *)
     private func startBackCameraCapture() -> Bool {
-        AntMediaClient.printf("Starting back camera capture...")
+        print("Starting back camera capture...")
         guard let backCapturer = backVideoCapturer else {
-            AntMediaClient.printf("Back capturer is nil")
+            print("Back capturer is nil")
             return false
         }
         
         // Get back camera device
         guard let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-            AntMediaClient.printf("Could not get back camera")
+            print("Could not get back camera")
             return false
         }
         
-        AntMediaClient.printf("Back camera device found: \(backCamera.localizedName)")
+        print("Back camera device found: \(backCamera.localizedName)")
         
         // Start capture with back camera
         let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: backCamera)
@@ -876,7 +876,7 @@ class WebRTCClient: NSObject {
             let fps = fmin(maxSupportedFramerate, Double(self.cameraSourceFPS))
             
             backCapturer.startCapture(with: backCamera, format: format, fps: Int(fps))
-            AntMediaClient.printf("Back camera capture started")
+            print("Back camera capture started")
             return true
         }
         
@@ -885,7 +885,7 @@ class WebRTCClient: NSObject {
     
     
     public func addLocalMediaStream() -> Bool {
-        AntMediaClient.printf("Add local media streams")
+        print("Add local media streams")
         if self.videoEnabled {
             switch cameraMode {
             case .frontOnly, .backOnly:
@@ -898,26 +898,26 @@ class WebRTCClient: NSObject {
                     params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
                     videoSender?.parameters = params
                 } else {
-                    AntMediaClient.printf("DegradationPreference cannot be set")
+                    print("DegradationPreference cannot be set")
                 }
                 
             case .dualCamera:
                 // Dual camera mode
                 if #available(iOS 15.0, *) {
-                    AntMediaClient.printf("Starting dual camera mode...")
+                    print("Starting dual camera mode...")
                     let (frontTrack, backTrack) = createDualCameraVideoTracks()
                     
                     if let frontTrack = frontTrack, let backTrack = backTrack {
                         self.frontVideoTrack = frontTrack
                         self.backVideoTrack = backTrack
                         
-                        AntMediaClient.printf("Dual camera tracks created successfully")
+                        print("Dual camera tracks created successfully")
                         
                         // Add both tracks to peer connection
                         self.frontVideoSender = self.peerConnection?.add(frontTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
                         self.backVideoSender = self.peerConnection?.add(backTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
                         
-                        AntMediaClient.printf("Dual camera tracks added to peer connection")
+                        print("Dual camera tracks added to peer connection")
                         
                         // Set degradation preference for both tracks
                         if let frontParams = frontVideoSender?.parameters {
@@ -930,13 +930,13 @@ class WebRTCClient: NSObject {
                             backVideoSender?.parameters = backParams
                         }
                         
-                        AntMediaClient.printf("Dual camera tracks added successfully")
+                        print("Dual camera tracks added successfully")
                     } else {
-                        AntMediaClient.printf("Failed to create dual camera tracks")
+                        print("Failed to create dual camera tracks")
                         return false
                     }
                 } else {
-                    AntMediaClient.printf("Dual camera requires iOS 15.0 or later")
+                    print("Dual camera requires iOS 15.0 or later")
                     return false
                 }
             }
@@ -953,7 +953,7 @@ class WebRTCClient: NSObject {
             if #available(iOS 15.0, *) {
                 if self.frontVideoTrack != nil && self.localVideoView != nil {
                     self.frontVideoTrack?.add(localVideoView!)
-                    AntMediaClient.printf("Front camera track added to local view")
+                    print("Front camera track added to local view")
                 }
             }
         } else {
@@ -993,18 +993,18 @@ class WebRTCClient: NSObject {
         case .frontOnly:
             if let frontTrack = frontVideoTrack {
                 frontTrack.add(view)
-                AntMediaClient.printf("Front camera track added to local view")
+                print("Front camera track added to local view")
             }
         case .backOnly:
             if let backTrack = backVideoTrack {
                 backTrack.add(view)
-                AntMediaClient.printf("Back camera track added to local view")
+                print("Back camera track added to local view")
             }
         case .dualCamera:
             // For dual camera, default to front camera
             if let frontTrack = frontVideoTrack {
                 frontTrack.add(view)
-                AntMediaClient.printf("Front camera track added to local view (dual camera mode)")
+                print("Front camera track added to local view (dual camera mode)")
             }
         }
     }
@@ -1042,13 +1042,13 @@ extension WebRTCClient: RTCDataChannelDelegate {
     
     func dataChannelDidChangeState(_ parametersdataChannel: RTCDataChannel) {
         if parametersdataChannel.readyState == .open {
-            AntMediaClient.printf("Data channel state is open")
+            print("Data channel state is open")
         } else if parametersdataChannel.readyState == .connecting {
-            AntMediaClient.printf("Data channel state is connecting")
+            print("Data channel state is connecting")
         } else if parametersdataChannel.readyState == .closing {
-            AntMediaClient.printf("Data channel state is closing")
+            print("Data channel state is closing")
         } else if parametersdataChannel.readyState == .closed {
-            AntMediaClient.printf("Data channel state is closed")
+            print("Data channel state is closed")
         }
     }
     
@@ -1065,66 +1065,66 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd rtpReceiver: RTCRtpReceiver, streams mediaStreams: [RTCMediaStream]) {
-        AntMediaClient.printf("didAdd track:\(String(describing: rtpReceiver.track?.kind)) media streams count:\(mediaStreams.count) ")
+        print("didAdd track:\(String(describing: rtpReceiver.track?.kind)) media streams count:\(mediaStreams.count) ")
         
         if let track = rtpReceiver.track {
             self.delegate?.trackAdded(track: track, stream: mediaStreams)
         } else {
-            AntMediaClient.printf("New track added but it's nil")
+            print("New track added but it's nil")
         }
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
-        AntMediaClient.printf("didRemove track:\(String(describing: rtpReceiver.track?.kind))")
+        print("didRemove track:\(String(describing: rtpReceiver.track?.kind))")
         
         if let track = rtpReceiver.track {
             self.delegate?.trackRemoved(track: track)
         } else {
-            AntMediaClient.printf("New track removed but it's nil")
+            print("New track removed but it's nil")
         }
     }
     
     // addedStream
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
-        AntMediaClient.printf("addedStream. Stream has \(stream.videoTracks.count) video tracks and \(stream.audioTracks.count) audio tracks")
+        print("addedStream. Stream has \(stream.videoTracks.count) video tracks and \(stream.audioTracks.count) audio tracks")
         
         if stream.videoTracks.count == 1 {
             // Single video track (existing behavior)
-            AntMediaClient.printf("stream has single video track")
+            print("stream has single video track")
             if remoteVideoView != nil {
                 remoteVideoTrack = stream.videoTracks[0]
                 
                 remoteVideoTrack.add(remoteVideoView!)
                 renderRemoteVideo(to: remoteVideoView!)
                 
-                AntMediaClient.printf("Has delegate??? (signalingStateChanged): \(String(describing: self.delegate))")
+                print("Has delegate??? (signalingStateChanged): \(String(describing: self.delegate))")
             }
         } else if stream.videoTracks.count > 1 {
             // Multiple video tracks (dual camera support)
-            AntMediaClient.printf("stream has multiple video tracks: \(stream.videoTracks.count)")
+            print("stream has multiple video tracks: \(stream.videoTracks.count)")
             
             // Handle multiple video tracks
             for (index, track) in stream.videoTracks.enumerated() {
-                AntMediaClient.printf("Processing video track \(index) with ID: \(track.trackId)")
+                print("Processing video track \(index) with ID: \(track.trackId)")
                 
                 // You can identify tracks by their trackId
                 if track.trackId == "front_video" {
                     // Handle front camera track
-                    AntMediaClient.printf("Front camera track received")
+                    print("Front camera track received")
                     if remoteVideoView != nil {
                         remoteVideoTrack = track
                         remoteVideoTrack.add(remoteVideoView!)
                         renderRemoteVideo(to: remoteVideoView!)
-                        AntMediaClient.printf("Front camera track added to remote view")
+                        print("Front camera track added to remote view")
                     }
                 } else if track.trackId == "back_video" {
                     // Handle back camera track
-                    AntMediaClient.printf("Back camera track received")
+                    print("Back camera track received")
                     // For now, we'll use the first track (front) for the main view
                     // In a full implementation, you'd have separate views for each camera
                 } else {
                     // Handle other video tracks
-                    AntMediaClient.printf("Other video track received: \(track.trackId)")
+                    print("Other video track received: \(track.trackId)")
                     // Use the first available track as fallback
                     if remoteVideoView != nil && remoteVideoTrack == nil {
                         remoteVideoTrack = track
@@ -1140,7 +1140,7 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     // removedStream
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
-        AntMediaClient.printf("RemovedStream")
+        print("RemovedStream")
         delegate?.remoteStreamRemoved(streamId: self.streamId)
         remoteVideoTrack = nil
         remoteAudioTrack = nil
@@ -1164,7 +1164,7 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     // iceConnectionChanged
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
-        AntMediaClient.printf("---> iceConnectionChanged: \(newState.rawValue) for stream: \(String(describing: self.streamId))")
+        print("---> iceConnectionChanged: \(newState.rawValue) for stream: \(String(describing: self.streamId))")
         self.iceConnectionState = newState
         self.delegate?.connectionStateChanged(newState: newState, streamId: self.streamId)
     }
@@ -1176,7 +1176,7 @@ extension WebRTCClient: RTCPeerConnectionDelegate {
     
     // didOpen dataChannel
     func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
-        AntMediaClient.printf("---> dataChannel opened")
+        print("---> dataChannel opened")
         self.dataChannel = dataChannel
         self.dataChannel?.delegate = self
     }
