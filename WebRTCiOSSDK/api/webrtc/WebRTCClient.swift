@@ -951,15 +951,19 @@ class WebRTCClient: NSObject {
         if cameraMode == .dualCamera {
             // For dual camera mode, add front camera to local view
             if #available(iOS 15.0, *) {
-                if self.frontVideoTrack != nil && self.localVideoView != nil {
-                    self.frontVideoTrack?.add(localVideoView!)
-                    print("Front camera track added to local view")
+                if let localView = self.localVideoView {
+                    setMainLocalView(localView)
+                } else {
+                    print("Local view is nil for dual camera mode")
                 }
             }
         } else {
             // For single camera mode
-            if self.localVideoTrack != nil && self.localVideoView != nil {
-                self.localVideoTrack.add(localVideoView!)
+            if let localTrack = self.localVideoTrack, let localView = self.localVideoView {
+                localTrack.add(localView)
+                print("Single camera track added to local view")
+            } else {
+                print("Single camera track or local view is nil - localTrack: \(String(describing: self.localVideoTrack)), localView: \(String(describing: self.localVideoView))")
             }
         }
         
@@ -1006,6 +1010,17 @@ class WebRTCClient: NSObject {
                 frontTrack.add(view)
                 print("Front camera track added to local view (dual camera mode)")
             }
+        }
+    }
+    
+    /// Set the main local view for dual camera mode (shows front camera by default)
+    @available(iOS 15.0, *)
+    public func setMainLocalView(_ view: RTCVideoRenderer) {
+        if let frontTrack = frontVideoTrack {
+            frontTrack.add(view)
+            print("Main local view set to front camera track")
+        } else {
+            print("Front camera track is nil, cannot set main local view")
         }
     }
     
