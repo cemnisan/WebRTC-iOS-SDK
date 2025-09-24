@@ -512,6 +512,16 @@ class WebRTCClient: NSObject {
             (self.videoCapturer as? RTCCustomFrameCapturer)?.stopCapture()
         }
         
+        // Stop dual camera capturers if they exist
+        if #available(iOS 15.0, *) {
+            frontVideoCapturer?.stopCapture()
+            backVideoCapturer?.stopCapture()
+            frontVideoCapturer = nil
+            backVideoCapturer = nil
+            frontVideoTrack = nil
+            backVideoTrack = nil
+        }
+        
         self.videoCapturer = nil
         
         self.peerConnection?.close()
@@ -756,19 +766,24 @@ class WebRTCClient: NSObject {
             return (nil, nil)
         }
         
+        // For now, let's implement a simpler approach: use two separate capturers
+        // This is more reliable than trying to use AVCaptureMultiCamSession with WebRTC
+        
         // Create front camera track
         let frontVideoSource = factory.videoSource()
         self.frontVideoCapturer = RTCCameraVideoCapturer(delegate: frontVideoSource)
         self.frontVideoTrack = factory.videoTrack(with: frontVideoSource, trackId: "front_video")
         
-        // Create back camera track
+        // Create back camera track  
         let backVideoSource = factory.videoSource()
         self.backVideoCapturer = RTCCameraVideoCapturer(delegate: backVideoSource)
         self.backVideoTrack = factory.videoTrack(with: backVideoSource, trackId: "back_video")
         
-        // Start dual camera capture
-        let captureStarted = startDualCameraCapture()
-        if !captureStarted {
+        // Start individual camera captures
+        let frontCaptureStarted = startFrontCameraCapture()
+        let backCaptureStarted = startBackCameraCapture()
+        
+        if !frontCaptureStarted || !backCaptureStarted {
             AntMediaClient.printf("Failed to start dual camera capture")
             return (nil, nil)
         }
@@ -776,48 +791,98 @@ class WebRTCClient: NSObject {
         return (frontVideoTrack, backVideoTrack)
     }
     
-    /// Start dual camera capture using AVCaptureMultiCamSession
+    /// Start front camera capture
     @available(iOS 15.0, *)
-    private func startDualCameraCapture() -> Bool {
-        guard WebRTCClient.isMultiCamSupported() else {
+    private func startFrontCameraCapture() -> Bool {
+        AntMediaClient.printf("Starting front camera capture...")
+        guard let frontCapturer = frontVideoCapturer else {
+            AntMediaClient.printf("Front capturer is nil")
             return false
         }
         
-        // Create multi-cam session
-        self._multiCamSession = AVCaptureMultiCamSession()
-        
-        // Get front and back camera devices
-        guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
-              let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-            AntMediaClient.printf("Could not get front or back camera")
+        // Get front camera device
+        guard let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else {
+            AntMediaClient.printf("Could not get front camera")
             return false
         }
         
-        do {
-            // Create inputs
-            let frontInput = try AVCaptureDeviceInput(device: frontCamera)
-            let backInput = try AVCaptureDeviceInput(device: backCamera)
-            
-            // Add inputs to session
-            if multiCamSession!.canAddInput(frontInput) {
-                multiCamSession!.addInput(frontInput)
+        AntMediaClient.printf("Front camera device found: \(frontCamera.localizedName)")
+        
+        // Start capture with front camera
+        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: frontCamera)
+        var selectedFormat: AVCaptureDevice.Format?
+        var currentDiff = INT_MAX
+        
+        for supportedFormat in supportedFormats {
+            let dimension = CMVideoFormatDescriptionGetDimensions(supportedFormat.formatDescription)
+            let diff = abs(Int32(targetWidth) - dimension.width) + abs(Int32(targetHeight) - dimension.height)
+            if diff < currentDiff {
+                selectedFormat = supportedFormat
+                currentDiff = diff
             }
-            
-            if multiCamSession!.canAddInput(backInput) {
-                multiCamSession!.addInput(backInput)
+        }
+        
+        if let format = selectedFormat {
+            var maxSupportedFramerate: Float64 = 0
+            for fpsRange in format.videoSupportedFrameRateRanges {
+                maxSupportedFramerate = fmax(maxSupportedFramerate, fpsRange.maxFrameRate)
             }
+            let fps = fmin(maxSupportedFramerate, Double(self.cameraSourceFPS))
             
-            // Start session
-            multiCamSession!.startRunning()
-            
-            AntMediaClient.printf("Dual camera session started successfully")
+            frontCapturer.startCapture(with: frontCamera, format: format, fps: Int(fps))
+            AntMediaClient.printf("Front camera capture started")
             return true
-            
-        } catch {
-            AntMediaClient.printf("Error setting up dual camera: \(error)")
+        }
+        
+        return false
+    }
+    
+    /// Start back camera capture
+    @available(iOS 15.0, *)
+    private func startBackCameraCapture() -> Bool {
+        AntMediaClient.printf("Starting back camera capture...")
+        guard let backCapturer = backVideoCapturer else {
+            AntMediaClient.printf("Back capturer is nil")
             return false
         }
+        
+        // Get back camera device
+        guard let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            AntMediaClient.printf("Could not get back camera")
+            return false
+        }
+        
+        AntMediaClient.printf("Back camera device found: \(backCamera.localizedName)")
+        
+        // Start capture with back camera
+        let supportedFormats = RTCCameraVideoCapturer.supportedFormats(for: backCamera)
+        var selectedFormat: AVCaptureDevice.Format?
+        var currentDiff = INT_MAX
+        
+        for supportedFormat in supportedFormats {
+            let dimension = CMVideoFormatDescriptionGetDimensions(supportedFormat.formatDescription)
+            let diff = abs(Int32(targetWidth) - dimension.width) + abs(Int32(targetHeight) - dimension.height)
+            if diff < currentDiff {
+                selectedFormat = supportedFormat
+                currentDiff = diff
+            }
+        }
+        
+        if let format = selectedFormat {
+            var maxSupportedFramerate: Float64 = 0
+            for fpsRange in format.videoSupportedFrameRateRanges {
+                maxSupportedFramerate = fmax(maxSupportedFramerate, fpsRange.maxFrameRate)
+            }
+            let fps = fmin(maxSupportedFramerate, Double(self.cameraSourceFPS))
+            
+            backCapturer.startCapture(with: backCamera, format: format, fps: Int(fps))
+            AntMediaClient.printf("Back camera capture started")
+            return true
+        }
+        
+        return false
     }
+    
     
     public func addLocalMediaStream() -> Bool {
         AntMediaClient.printf("Add local media streams")
@@ -839,15 +904,20 @@ class WebRTCClient: NSObject {
             case .dualCamera:
                 // Dual camera mode
                 if #available(iOS 15.0, *) {
+                    AntMediaClient.printf("Starting dual camera mode...")
                     let (frontTrack, backTrack) = createDualCameraVideoTracks()
                     
                     if let frontTrack = frontTrack, let backTrack = backTrack {
                         self.frontVideoTrack = frontTrack
                         self.backVideoTrack = backTrack
                         
+                        AntMediaClient.printf("Dual camera tracks created successfully")
+                        
                         // Add both tracks to peer connection
                         self.frontVideoSender = self.peerConnection?.add(frontTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
                         self.backVideoSender = self.peerConnection?.add(backTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
+                        
+                        AntMediaClient.printf("Dual camera tracks added to peer connection")
                         
                         // Set degradation preference for both tracks
                         if let frontParams = frontVideoSender?.parameters {
