@@ -520,7 +520,10 @@ class WebRTCClient: NSObject {
         
         self.videoCapturer = nil
         
-        self.peerConnection?.close()
+        // Do NOT close peerConnection here for mode switches; allow caller to manage lifecycle
+        if let pc = self.peerConnection {
+            pc.close()
+        }
         self.peerConnection = nil
         print("disconnected and released resources for \(streamId)")
     }
@@ -922,11 +925,14 @@ class WebRTCClient: NSObject {
                         guard let self = self, let capturer = self.videoCapturer as? RTCCustomFrameCapturer else { return }
                         capturer.capture(pixelBuffer, rotation: ._0, timeStampNs: tsNs)
                     })
-                    if self.dualComposer?.start() == true {
-                        print("Dual camera composer started")
-                    } else {
-                        print("Failed to start dual camera composer")
-                        return false
+                    // Delay the start slightly to ensure previous sessions are fully torn down
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+                        guard let self = self else { return }
+                        if self.dualComposer?.start() == true {
+                            print("Dual camera composer started")
+                        } else {
+                            print("Failed to start dual camera composer")
+                        }
                     }
                 } else {
                     print("Dual camera composite requires iOS 13.0 or later")
