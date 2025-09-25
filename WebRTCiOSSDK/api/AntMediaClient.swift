@@ -829,8 +829,24 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         // Connect tracks to views
         let streamId = getPublisherStreamId()
         if let client = webRTCClientMap[streamId] {
-            // Use the new dual camera views method
-            client.setDualCameraViews(frontView: frontRenderer, backView: backRenderer)
+            if #available(iOS 13.0, *) {
+                // In composite mode, there is a single localVideoTrack. Attach it to both views for preview.
+                if client.getCameraMode() == .dualCamera {
+                    if let local = client.getLocalVideoTrack() as RTCVideoTrack? {
+                        local.add(frontRenderer)
+                        local.add(backRenderer)
+                        print("Composite track attached to both local views")
+                    } else {
+                        // Fallback to dual views method if separate tracks exist
+                        client.setDualCameraViews(frontView: frontRenderer, backView: backRenderer)
+                    }
+                } else {
+                    client.setLocalViewForCamera(.frontOnly, view: frontRenderer)
+                    client.setLocalViewForCamera(.backOnly, view: backRenderer)
+                }
+            } else {
+                client.setDualCameraViews(frontView: frontRenderer, backView: backRenderer)
+            }
         }
         
         print("Dual local views set successfully")

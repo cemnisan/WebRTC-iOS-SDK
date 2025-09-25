@@ -55,17 +55,26 @@ class DualCameraComposer: NSObject {
             if let backDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
                 let backInput = try AVCaptureDeviceInput(device: backDevice)
                 if session.canAddInput(backInput) {
-                    session.addInput(backInput)
+                    session.addInputWithNoConnections(backInput)
                 }
 
                 let backOutput = AVCaptureVideoDataOutput()
                 backOutput.alwaysDiscardsLateVideoFrames = true
                 backOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
                 if session.canAddOutput(backOutput) {
-                    session.addOutput(backOutput)
+                    session.addOutputWithNoConnections(backOutput)
                 }
                 self.backOutput = backOutput
                 backOutput.setSampleBufferDelegate(self, queue: backQueue)
+
+                // Connect back input to back output
+                if let backPort = backInput.ports.first(where: { $0.mediaType == .video }) {
+                    let connection = AVCaptureConnection(inputPorts: [backPort], output: backOutput)
+                    connection.videoOrientation = .portrait
+                    if session.canAddConnection(connection) {
+                        session.addConnection(connection)
+                    }
+                }
             } else {
                 print("Could not get back camera for composer")
             }
@@ -74,17 +83,28 @@ class DualCameraComposer: NSObject {
             if let frontDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
                 let frontInput = try AVCaptureDeviceInput(device: frontDevice)
                 if session.canAddInput(frontInput) {
-                    session.addInput(frontInput)
+                    session.addInputWithNoConnections(frontInput)
                 }
 
                 let frontOutput = AVCaptureVideoDataOutput()
                 frontOutput.alwaysDiscardsLateVideoFrames = true
                 frontOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
                 if session.canAddOutput(frontOutput) {
-                    session.addOutput(frontOutput)
+                    session.addOutputWithNoConnections(frontOutput)
                 }
                 self.frontOutput = frontOutput
                 frontOutput.setSampleBufferDelegate(self, queue: frontQueue)
+
+                // Connect front input to front output
+                if let frontPort = frontInput.ports.first(where: { $0.mediaType == .video }) {
+                    let connection = AVCaptureConnection(inputPorts: [frontPort], output: frontOutput)
+                    connection.videoOrientation = .portrait
+                    connection.automaticallyAdjustsVideoMirroring = false
+                    connection.isVideoMirrored = true
+                    if session.canAddConnection(connection) {
+                        session.addConnection(connection)
+                    }
+                }
             } else {
                 print("Could not get front camera for composer")
             }
@@ -171,7 +191,8 @@ class DualCameraComposer: NSObject {
 
                 let frontScaled = frontImage.transformed(by: self.scaleToFitTransform(image: frontImage, target: pipRect.size))
                 let frontPositioned = frontScaled.transformed(by: CGAffineTransform(translationX: pipRect.origin.x, y: pipRect.origin.y))
-                composed = composed.composited(over: frontPositioned)
+                // Composite front (overlay) over background
+                composed = frontPositioned.composited(over: composed)
             }
 
             // Render
