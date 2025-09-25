@@ -55,7 +55,7 @@ class DualCameraComposer: NSObject {
         self.pipNormalizedX = CGFloat(48.0) / CGFloat(max(1, targetWidth))
         self.pipDesignYOffset = 100.0
         self.pipDesignScreenHeight = 906.0
-        self.pipHeightNormalized = 130.0 / 906.0
+        self.pipHeightNormalized = (130.0 / 906.0) * 1.25
         self.pipAspectRatio = 73.0 / 130.0
         super.init()
     }
