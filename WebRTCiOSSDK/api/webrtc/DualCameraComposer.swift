@@ -56,7 +56,7 @@ class DualCameraComposer: NSObject {
         self.fps = fps
         self.onFrame = onFrame
         // Defaults tuned to your design: X≈48px from left, Y≈100 on design height 906, height≈130/906, radius 10, border 3 white
-        self.pipNormalizedX = CGFloat(36.0) / CGFloat(max(1, targetWidth))
+        self.pipNormalizedX = CGFloat(24.0) / CGFloat(max(1, targetWidth))
         self.pipDesignYOffset = 100.0
         self.pipDesignScreenHeight = 906.0
         self.pipHeightNormalized = (130.0 / 906.0) * 1.25
