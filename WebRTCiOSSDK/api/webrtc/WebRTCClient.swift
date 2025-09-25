@@ -63,6 +63,10 @@ class WebRTCClient: NSObject {
     private var backCameraSession: AVCaptureSession?
     private var sessionQueue: DispatchQueue = DispatchQueue(label: "camera.session.queue")
     
+    // Composite dual camera (front over back) into single track
+    @available(iOS 13.0, *)
+    private var dualComposer: DualCameraComposer?
+    
     private var token: String!
     private var streamId: String!
     
@@ -521,6 +525,10 @@ class WebRTCClient: NSObject {
         if #available(iOS 15.0, *) {
             cleanupDualCameraResources()
         }
+        if #available(iOS 13.0, *) {
+            dualComposer?.stop()
+            dualComposer = nil
+        }
         
         self.videoCapturer = nil
         
@@ -978,41 +986,40 @@ class WebRTCClient: NSObject {
                 }
                 
             case .dualCamera:
-                // Dual camera mode
-                if #available(iOS 15.0, *) {
-                    print("Starting dual camera mode...")
-                    let (frontTrack, backTrack) = createDualCameraVideoTracks()
-                    
-                    if let frontTrack = frontTrack, let backTrack = backTrack {
-                        self.frontVideoTrack = frontTrack
-                        self.backVideoTrack = backTrack
-                        
-                        print("Dual camera tracks created successfully")
-                        
-                        // Add both tracks to peer connection
-                        self.frontVideoSender = self.peerConnection?.add(frontTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
-                        self.backVideoSender = self.peerConnection?.add(backTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
-                        
-                        print("Dual camera tracks added to peer connection")
-                        
-                        // Set degradation preference for both tracks
-                        if let frontParams = frontVideoSender?.parameters {
-                            frontParams.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
-                            frontVideoSender?.parameters = frontParams
-                        }
-                        
-                        if let backParams = backVideoSender?.parameters {
-                            backParams.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
-                            backVideoSender?.parameters = backParams
-                        }
-                        
-                        print("Dual camera tracks added successfully")
+                // Dual camera mode -> composite into single track to ensure server compatibility
+                if #available(iOS 13.0, *) {
+                    print("Starting dual camera composite mode...")
+                    let videoSource = factory.videoSource(forScreenCast: true)
+                    let customCapturer = RTCCustomFrameCapturer(
+                        delegate: videoSource,
+                        height: targetHeight,
+                        externalCapture: true,
+                        videoEnabled: true,
+                        audioEnabled: externalAudio,
+                        fps: self.cameraSourceFPS
+                    )
+                    self.videoCapturer = customCapturer
+                    (self.videoCapturer as? RTCCustomFrameCapturer)?.setWebRTCClient(webRTCClient: self)
+                    let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
+                    self.localVideoTrack = videoTrack
+                    self.videoSender = self.peerConnection?.add(videoTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
+                    if let params = videoSender?.parameters {
+                        params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
+                        videoSender?.parameters = params
+                    }
+                    // Start composer which feeds frames into custom capturer
+                    self.dualComposer = DualCameraComposer(targetWidth: self.targetWidth, targetHeight: self.targetHeight, fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
+                        guard let self = self, let capturer = self.videoCapturer as? RTCCustomFrameCapturer else { return }
+                        capturer.capture(pixelBuffer, rotation: ._0, timeStampNs: tsNs)
+                    })
+                    if self.dualComposer?.start() == true {
+                        print("Dual camera composer started")
                     } else {
-                        print("Failed to create dual camera tracks")
+                        print("Failed to start dual camera composer")
                         return false
                     }
                 } else {
-                    print("Dual camera requires iOS 15.0 or later")
+                    print("Dual camera composite requires iOS 13.0 or later")
                     return false
                 }
             }

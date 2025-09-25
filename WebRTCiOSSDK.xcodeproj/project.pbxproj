@@ -56,6 +56,7 @@
 		A8DAC0A42A0672040007CDE7 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A8DAC0A22A0672040007CDE7 /* LaunchScreen.storyboard */; };
 		F8A033472E7ED2ED00BBF2D6 /* FrameRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A033462E7ED2ED00BBF2D6 /* FrameRenderer.swift */; };
 		F8A0334A2E7ED41900BBF2D6 /* libwebp in Frameworks */ = {isa = PBXBuildFile; productRef = F8A033492E7ED41900BBF2D6 /* libwebp */; };
+		F8A2E55B2E852B1400ED2716 /* DualCameraComposer 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A2E55A2E852B1400ED2716 /* DualCameraComposer 2.swift */; };
 		F8DA5A412E7D75CE0084B2D1 /* UIDevice+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8DA5A402E7D75CE0084B2D1 /* UIDevice+Extension.swift */; };
 /* End PBXBuildFile section */
 
@@ -200,6 +201,7 @@
 		A8DAC0402A063BC00007CDE7 /* ConferenceViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConferenceViewController.swift; sourceTree = "<group>"; };
 		A8DAC0A32A0672040007CDE7 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F8A033462E7ED2ED00BBF2D6 /* FrameRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameRenderer.swift; sourceTree = "<group>"; };
+		F8A2E55A2E852B1400ED2716 /* DualCameraComposer 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DualCameraComposer 2.swift"; sourceTree = "<group>"; };
 		F8DA5A402E7D75CE0084B2D1 /* UIDevice+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -339,6 +341,7 @@
 		A8DABFE82A063A020007CDE7 /* webrtc */ = {
 			isa = PBXGroup;
 			children = (
+				F8A2E55A2E852B1400ED2716 /* DualCameraComposer 2.swift */,
 				F8DA5A3F2E7D75990084B2D1 /* utils */,
 				A8DABFE92A063A020007CDE7 /* RTCCustomFrameCapturer.swift */,
 				A8DABFEA2A063A020007CDE7 /* Config.swift */,
@@ -717,6 +720,7 @@
 				A8DABFF72A063A020007CDE7 /* WebRTCClient.swift in Sources */,
 				A8DABFF32A063A020007CDE7 /* AntMediaClientDelegate.swift in Sources */,
 				A8DABFF62A063A020007CDE7 /* WebRTCClientDelegate.swift in Sources */,
+				F8A2E55B2E852B1400ED2716 /* DualCameraComposer 2.swift in Sources */,
 				A8DABFF22A063A020007CDE7 /* AntMediaClientProtocol.swift in Sources */,
 				A8CAF2BF2C0B1DFC00520691 /* ClientStatistics.swift in Sources */,
 				F8A033472E7ED2ED00BBF2D6 /* FrameRenderer.swift in Sources */,
