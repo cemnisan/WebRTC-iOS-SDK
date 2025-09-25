@@ -185,7 +185,7 @@ class DualCameraComposer: NSObject {
                 let pipWidth = CGFloat(self.targetWidth) * 0.3
                 let aspect = frontImage.extent.height / frontImage.extent.width
                 let pipHeight = pipWidth * aspect
-                let pipX = 16.0
+                let pipX = 48.0
                 let pipY = CGFloat(self.targetHeight) - pipHeight - 16.0
                 let pipRect = CGRect(x: pipX, y: pipY, width: pipWidth, height: pipHeight)
 
