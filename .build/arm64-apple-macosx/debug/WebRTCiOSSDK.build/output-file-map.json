@@ -44,12 +44,6 @@
     "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary~partial.swiftmodule",
     "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/Dictionary.swiftdeps"
   },
-  "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/DualCameraComposer 2.swift": {
-    "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/DualCameraComposer 2.d",
-    "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/DualCameraComposer 2.swift.o",
-    "swiftmodule": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/DualCameraComposer 2~partial.swiftmodule",
-    "swift-dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/DualCameraComposer 2.swiftdeps"
-  },
   "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/WebRTCiOSSDK/api/webrtc/DualCameraComposer.swift": {
     "dependencies": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/DualCameraComposer.d",
     "object": "/Users/cemnisan/Desktop/WebRTC-iOS-SDK/.build/arm64-apple-macosx/debug/WebRTCiOSSDK.build/DualCameraComposer.swift.o",
