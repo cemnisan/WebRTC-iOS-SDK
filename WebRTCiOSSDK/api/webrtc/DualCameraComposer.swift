@@ -14,10 +14,8 @@ import CoreVideo
 @available(iOS 13.0, *)
 class DualCameraComposer: NSObject {
     private let session = AVCaptureMultiCamSession()
-    private let sessionQueue = DispatchQueue(label: "dual.camera.session.queue")
-    private let processingQueue = DispatchQueue(label: "dual.camera.composer.queue")
-    private let frontQueue = DispatchQueue(label: "dual.camera.front.queue")
-    private let backQueue = DispatchQueue(label: "dual.camera.back.queue")
+    private let sessionQueue = DispatchQueue(label: "multiple session queue")
+    private let processingQueue = DispatchQueue(label: "data output queue")
     private let context = CIContext(options: nil)
 
     private var frontOutput: AVCaptureVideoDataOutput?
@@ -129,7 +127,7 @@ class DualCameraComposer: NSObject {
                     self.session.addOutputWithNoConnections(backOutput)
                 }
                 self.backOutput = backOutput
-                backOutput.setSampleBufferDelegate(self, queue: self.backQueue)
+                backOutput.setSampleBufferDelegate(self, queue: self.processingQueue)
 
                 // Connect back input to back output
                 if let backPort = backInput.ports.first(where: { $0.mediaType == .video }) {
@@ -157,7 +155,7 @@ class DualCameraComposer: NSObject {
                     self.session.addOutputWithNoConnections(frontOutput)
                 }
                 self.frontOutput = frontOutput
-                frontOutput.setSampleBufferDelegate(self, queue: self.frontQueue)
+                frontOutput.setSampleBufferDelegate(self, queue: self.processingQueue)
 
                 // Connect front input to front output
                 if let frontPort = frontInput.ports.first(where: { $0.mediaType == .video }) {
@@ -192,7 +190,7 @@ class DualCameraComposer: NSObject {
 
     func stop() {
         guard isRunning else { return }
-        processingQueue.async {
+        sessionQueue.async {
             self.session.stopRunning()
             self.isRunning = false
             self.latestFrontBuffer = nil
