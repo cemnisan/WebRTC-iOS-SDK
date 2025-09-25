@@ -67,6 +67,9 @@ class WebRTCClient: NSObject {
     
     private var frameRenderer: FrameRenderer?
     
+    // Pending local renderers for composite dual-camera mode
+    private var pendingCompositeRenderers: [RTCVideoRenderer] = []
+    
     // Timer for sending timestamp messages
     private var timestampTimer: Timer?
     
@@ -920,6 +923,9 @@ class WebRTCClient: NSObject {
                         params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
                         videoSender?.parameters = params
                     }
+                    // Attach any pending composite renderers now that track exists
+                    for r in self.pendingCompositeRenderers { videoTrack.add(r) }
+                    self.pendingCompositeRenderers.removeAll()
                     // Start composer which feeds frames into custom capturer
                     self._dualComposer = DualCameraComposer(targetWidth: self.targetWidth, targetHeight: self.targetHeight, fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
                         guard let self = self, let capturer = self.videoCapturer as? RTCCustomFrameCapturer else { return }
@@ -968,6 +974,23 @@ class WebRTCClient: NSObject {
     
     public func getLocalVideoTrack() -> RTCVideoTrack {
         return self.localVideoTrack
+    }
+    
+    // Optional accessor to avoid crashes before track is created
+    public func getLocalVideoTrackIfAvailable() -> RTCVideoTrack? {
+        return self.localVideoTrack
+    }
+    
+    // Register composite local renderer to be attached when localVideoTrack becomes available
+    @available(iOS 13.0, *)
+    public func registerCompositeLocalRenderer(_ renderer: RTCVideoRenderer) {
+        if let track = self.localVideoTrack {
+            track.add(renderer)
+            print("Composite track attached to pending renderer immediately")
+        } else {
+            pendingCompositeRenderers.append(renderer)
+            print("Queued composite renderer until local track is ready")
+        }
     }
     
     public func getLocalAudioTrack() -> RTCAudioTrack {
