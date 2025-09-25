@@ -65,7 +65,11 @@ class WebRTCClient: NSObject {
     
     // Composite dual camera (front over back) into single track
     @available(iOS 13.0, *)
-    private var dualComposer: DualCameraComposer?
+    private var dualComposer: DualCameraComposer? {
+        return _dualComposer as? DualCameraComposer
+    }
+    
+    private var _dualComposer: Any?
     
     private var token: String!
     private var streamId: String!
@@ -527,7 +531,7 @@ class WebRTCClient: NSObject {
         }
         if #available(iOS 13.0, *) {
             dualComposer?.stop()
-            dualComposer = nil
+            _dualComposer = nil
         }
         
         self.videoCapturer = nil
@@ -1008,7 +1012,7 @@ class WebRTCClient: NSObject {
                         videoSender?.parameters = params
                     }
                     // Start composer which feeds frames into custom capturer
-                    self.dualComposer = DualCameraComposer(targetWidth: self.targetWidth, targetHeight: self.targetHeight, fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
+                    self._dualComposer = DualCameraComposer(targetWidth: self.targetWidth, targetHeight: self.targetHeight, fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
                         guard let self = self, let capturer = self.videoCapturer as? RTCCustomFrameCapturer else { return }
                         capturer.capture(pixelBuffer, rotation: ._0, timeStampNs: tsNs)
                     })
