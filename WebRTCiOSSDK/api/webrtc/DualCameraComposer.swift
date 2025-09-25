@@ -7,6 +7,7 @@
 
 import Foundation
 import AVFoundation
+import CoreGraphics
 import CoreImage
 import CoreVideo
 
@@ -31,6 +32,17 @@ class DualCameraComposer: NSObject {
 
     private var pixelBufferPool: CVPixelBufferPool?
 
+    // PiP layout configuration (dynamic, screen-size independent)
+    // X position as a fraction of output width [0,1]
+    private var pipNormalizedX: CGFloat
+    // Y offset from top in design points scaled by design screen height
+    private var pipDesignYOffset: CGFloat
+    private var pipDesignScreenHeight: CGFloat
+    // PiP height as a fraction of output height [0,1]
+    private var pipHeightNormalized: CGFloat
+    // PiP aspect ratio (width/height)
+    private var pipAspectRatio: CGFloat
+
     // Called with composited pixel buffer and timestamp ns
     private let onFrame: (_ pixelBuffer: CVPixelBuffer, _ timestampNs: Int64) -> Void
 
@@ -39,7 +51,26 @@ class DualCameraComposer: NSObject {
         self.targetHeight = targetHeight
         self.fps = fps
         self.onFrame = onFrame
+        // Defaults tuned to your design: X≈48px from left, Y≈100 on design height 906, height≈130/906
+        self.pipNormalizedX = CGFloat(48.0) / CGFloat(max(1, targetWidth))
+        self.pipDesignYOffset = 100.0
+        self.pipDesignScreenHeight = 906.0
+        self.pipHeightNormalized = 130.0 / 906.0
+        self.pipAspectRatio = 73.0 / 130.0
         super.init()
+    }
+
+    // Allow runtime configuration
+    func configurePiP(normalizedX: CGFloat? = nil,
+                      designYOffset: CGFloat? = nil,
+                      designScreenHeight: CGFloat? = nil,
+                      heightNormalized: CGFloat? = nil,
+                      aspectRatio: CGFloat? = nil) {
+        if let v = normalizedX { self.pipNormalizedX = v }
+        if let v = designYOffset { self.pipDesignYOffset = v }
+        if let v = designScreenHeight { self.pipDesignScreenHeight = v }
+        if let v = heightNormalized { self.pipHeightNormalized = v }
+        if let v = aspectRatio { self.pipAspectRatio = v }
     }
 
     func start() -> Bool {
@@ -181,12 +212,13 @@ class DualCameraComposer: NSObject {
                 // Mirror front for natural selfie preview
                 frontImage = frontImage.transformed(by: CGAffineTransform(scaleX: -1, y: 1)).transformed(by: CGAffineTransform(translationX: frontImage.extent.width, y: 0))
 
-                // Compute PiP size and position (top-left)
-                let pipWidth = CGFloat(self.targetWidth) * 0.3
-                let aspect = frontImage.extent.height / frontImage.extent.width
-                let pipHeight = pipWidth * aspect
-                let pipX = 48.0
-                let pipY = CGFloat(self.targetHeight) - pipHeight - 16.0
+                // Compute PiP size and position dynamically
+                let pipHeight = CGFloat(self.targetHeight) * self.pipHeightNormalized
+                let pipWidth = self.pipAspectRatio * pipHeight
+                let pipX = self.pipNormalizedX * CGFloat(self.targetWidth)
+                // From top coordinate system to CI's bottom-left origin
+                let yFromTop = (self.pipDesignYOffset / max(1.0, self.pipDesignScreenHeight)) * CGFloat(self.targetHeight)
+                let pipY = CGFloat(self.targetHeight) - pipHeight - yFromTop
                 let pipRect = CGRect(x: pipX, y: pipY, width: pipWidth, height: pipHeight)
 
                 let frontScaled = frontImage.transformed(by: self.scaleToFitTransform(image: frontImage, target: pipRect.size))
