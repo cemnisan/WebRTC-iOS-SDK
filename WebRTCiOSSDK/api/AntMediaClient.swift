@@ -750,15 +750,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     open func isMultiCamSupported() -> Bool {
         return WebRTCClient.isMultiCamSupported()
     }
-    
-    /// Restart front camera if it's frozen in dual camera mode
-    @available(iOS 15.0, *)
-    open func restartFrontCameraIfNeeded() {
-        for (_, client) in webRTCClientMap {
-            client.restartFrontCameraIfNeeded()
-        }
-    }
-    
+
     /// Set dual remote views for front and back camera
     @available(iOS 15.0, *)
     open func setDualRemoteViews(
