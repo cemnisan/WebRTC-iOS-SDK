@@ -129,7 +129,7 @@ class DualCameraComposer: NSObject {
                     self.session.addOutputWithNoConnections(backOutput)
                 }
                 self.backOutput = backOutput
-                backOutput.setSampleBufferDelegate(self, queue: backQueue)
+                backOutput.setSampleBufferDelegate(self, queue: self.backQueue)
 
                 // Connect back input to back output
                 if let backPort = backInput.ports.first(where: { $0.mediaType == .video }) {
@@ -157,7 +157,7 @@ class DualCameraComposer: NSObject {
                     self.session.addOutputWithNoConnections(frontOutput)
                 }
                 self.frontOutput = frontOutput
-                frontOutput.setSampleBufferDelegate(self, queue: frontQueue)
+                frontOutput.setSampleBufferDelegate(self, queue: self.frontQueue)
 
                 // Connect front input to front output
                 if let frontPort = frontInput.ports.first(where: { $0.mediaType == .video }) {
@@ -176,7 +176,7 @@ class DualCameraComposer: NSObject {
             self.session.commitConfiguration()
 
             // Configure pixel buffer pool
-            createPixelBufferPool(width: targetWidth, height: targetHeight)
+            self.createPixelBufferPool(width: self.targetWidth, height: self.targetHeight)
 
             self.session.startRunning()
             self.isRunning = true
