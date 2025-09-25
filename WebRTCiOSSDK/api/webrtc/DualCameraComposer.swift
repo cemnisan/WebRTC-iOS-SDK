@@ -100,7 +100,7 @@ class DualCameraComposer: NSObject {
         isStarting = true
 
         var started = false
-        sessionQueue.async {
+        sessionQueue.sync {
             // Permission check
             let auth = AVCaptureDevice.authorizationStatus(for: .video)
             if auth == .denied || auth == .restricted {
@@ -190,7 +190,7 @@ class DualCameraComposer: NSObject {
 
     func stop() {
         guard isRunning else { return }
-        sessionQueue.async {
+        sessionQueue.sync {
             self.session.stopRunning()
             self.isRunning = false
             self.latestFrontBuffer = nil
