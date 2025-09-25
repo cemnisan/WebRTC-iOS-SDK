@@ -42,6 +42,10 @@ class DualCameraComposer: NSObject {
     private var pipHeightNormalized: CGFloat
     // PiP aspect ratio (width/height)
     private var pipAspectRatio: CGFloat
+    // Styling
+    private var pipCornerRadius: CGFloat
+    private var pipBorderWidth: CGFloat
+    private var pipBorderColor: CIColor
 
     // Called with composited pixel buffer and timestamp ns
     private let onFrame: (_ pixelBuffer: CVPixelBuffer, _ timestampNs: Int64) -> Void
@@ -51,12 +55,15 @@ class DualCameraComposer: NSObject {
         self.targetHeight = targetHeight
         self.fps = fps
         self.onFrame = onFrame
-        // Defaults tuned to your design: X≈48px from left, Y≈100 on design height 906, height≈130/906
+        // Defaults tuned to your design: X≈48px from left, Y≈100 on design height 906, height≈130/906, radius 10, border 3 white
         self.pipNormalizedX = CGFloat(48.0) / CGFloat(max(1, targetWidth))
         self.pipDesignYOffset = 100.0
         self.pipDesignScreenHeight = 906.0
         self.pipHeightNormalized = (130.0 / 906.0) * 1.25
         self.pipAspectRatio = 73.0 / 130.0
+        self.pipCornerRadius = 10.0
+        self.pipBorderWidth = 3.0
+        self.pipBorderColor = CIColor(color: .white)
         super.init()
     }
 
@@ -65,12 +72,18 @@ class DualCameraComposer: NSObject {
                       designYOffset: CGFloat? = nil,
                       designScreenHeight: CGFloat? = nil,
                       heightNormalized: CGFloat? = nil,
-                      aspectRatio: CGFloat? = nil) {
+                      aspectRatio: CGFloat? = nil,
+                      cornerRadius: CGFloat? = nil,
+                      borderWidth: CGFloat? = nil,
+                      borderColor: CGColor? = nil) {
         if let v = normalizedX { self.pipNormalizedX = v }
         if let v = designYOffset { self.pipDesignYOffset = v }
         if let v = designScreenHeight { self.pipDesignScreenHeight = v }
         if let v = heightNormalized { self.pipHeightNormalized = v }
         if let v = aspectRatio { self.pipAspectRatio = v }
+        if let v = cornerRadius { self.pipCornerRadius = v }
+        if let v = borderWidth { self.pipBorderWidth = v }
+        if let v = borderColor { self.pipBorderColor = CIColor(cgColor: v) }
     }
 
     func start() -> Bool {
@@ -220,11 +233,44 @@ class DualCameraComposer: NSObject {
                 let yFromTop = (self.pipDesignYOffset / max(1.0, self.pipDesignScreenHeight)) * CGFloat(self.targetHeight)
                 let pipY = CGFloat(self.targetHeight) - pipHeight - yFromTop
                 let pipRect = CGRect(x: pipX, y: pipY, width: pipWidth, height: pipHeight)
+                let innerRect = pipRect.insetBy(dx: self.pipBorderWidth, dy: self.pipBorderWidth)
 
-                let frontScaled = frontImage.transformed(by: self.scaleToFitTransform(image: frontImage, target: pipRect.size))
-                let frontPositioned = frontScaled.transformed(by: CGAffineTransform(translationX: pipRect.origin.x, y: pipRect.origin.y))
-                // Composite front (overlay) over background
-                composed = frontPositioned.composited(over: composed)
+                // Draw border as rounded rect
+                if let borderMask = CIFilter(name: "CIRoundedRectangleGenerator", parameters: [
+                    "inputExtent": CIVector(cgRect: CGRect(origin: .zero, size: pipRect.size)),
+                    "inputRadius": self.pipCornerRadius + self.pipBorderWidth
+                ])?.outputImage {
+                    let borderColorImg = CIImage(color: self.pipBorderColor).cropped(to: CGRect(origin: .zero, size: pipRect.size))
+                    let clearOuter = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: 0)).cropped(to: CGRect(origin: .zero, size: pipRect.size))
+                    if let coloredBorder = CIFilter(name: "CIBlendWithAlphaMask", parameters: [
+                        kCIInputImageKey: borderColorImg,
+                        kCIInputBackgroundImageKey: clearOuter,
+                        kCIInputMaskImageKey: borderMask
+                    ])?.outputImage {
+                        let borderTranslated = coloredBorder.transformed(by: CGAffineTransform(translationX: pipRect.origin.x, y: pipRect.origin.y))
+                        composed = borderTranslated.composited(over: composed)
+                    }
+                }
+
+                // Front content masked with rounded corners inside innerRect
+                let frontScaled = frontImage
+                    .transformed(by: self.scaleToFitTransform(image: frontImage, target: innerRect.size))
+                    .cropped(to: CGRect(origin: .zero, size: innerRect.size))
+
+                if let innerMask = CIFilter(name: "CIRoundedRectangleGenerator", parameters: [
+                    "inputExtent": CIVector(cgRect: CGRect(origin: .zero, size: innerRect.size)),
+                    "inputRadius": self.pipCornerRadius
+                ])?.outputImage {
+                    let clearInner = CIImage(color: CIColor(red: 0, green: 0, blue: 0, alpha: 0)).cropped(to: CGRect(origin: .zero, size: innerRect.size))
+                    if let maskedFront = CIFilter(name: "CIBlendWithAlphaMask", parameters: [
+                        kCIInputImageKey: frontScaled,
+                        kCIInputBackgroundImageKey: clearInner,
+                        kCIInputMaskImageKey: innerMask
+                    ])?.outputImage {
+                        let frontPositioned = maskedFront.transformed(by: CGAffineTransform(translationX: innerRect.origin.x, y: innerRect.origin.y))
+                        composed = frontPositioned.composited(over: composed)
+                    }
+                }
             }
 
             // Render
