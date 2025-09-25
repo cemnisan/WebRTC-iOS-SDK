@@ -181,12 +181,12 @@ class DualCameraComposer: NSObject {
                 // Mirror front for natural selfie preview
                 frontImage = frontImage.transformed(by: CGAffineTransform(scaleX: -1, y: 1)).transformed(by: CGAffineTransform(translationX: frontImage.extent.width, y: 0))
 
-                // Compute PiP size and position (bottom-right)
+                // Compute PiP size and position (top-left)
                 let pipWidth = CGFloat(self.targetWidth) * 0.3
                 let aspect = frontImage.extent.height / frontImage.extent.width
                 let pipHeight = pipWidth * aspect
-                let pipX = CGFloat(self.targetWidth) - pipWidth - 16
-                let pipY = 16.0
+                let pipX = 16.0
+                let pipY = CGFloat(self.targetHeight) - pipHeight - 16.0
                 let pipRect = CGRect(x: pipX, y: pipY, width: pipWidth, height: pipHeight)
 
                 let frontScaled = frontImage.transformed(by: self.scaleToFitTransform(image: frontImage, target: pipRect.size))
