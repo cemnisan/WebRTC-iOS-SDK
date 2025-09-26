@@ -535,6 +535,7 @@ class WebRTCClient: NSObject {
         // Clear pending renderers
         pendingCompositeRenderers.removeAll()
         
+        // Force additional cleanup to release camera hardware
         self.videoCapturer = nil
         
         // Do NOT close peerConnection here for mode switches; allow caller to manage lifecycle
@@ -960,8 +961,26 @@ class WebRTCClient: NSObject {
                     if self.dualComposer?.start() == true {
                         print("Dual camera composer started")
                     } else {
-                        print("Failed to start dual camera composer")
-                        return false
+                        print("Failed to start dual camera composer - falling back to back camera only")
+                        // Clean up failed dual camera attempt
+                        self._dualComposer = nil
+                        
+                        // Fall back to back camera only
+                        let videoCapturer = RTCCameraVideoCapturer(delegate: videoSource)
+                        self.videoCapturer = videoCapturer
+                        let videoTrack = factory.videoTrack(with: videoSource, trackId: "video0")
+                        self.localVideoTrack = videoTrack
+                        self.videoSender = self.peerConnection?.add(videoTrack, streamIds: [LOCAL_MEDIA_STREAM_ID])
+                        if let params = videoSender?.parameters {
+                            params.degradationPreference = (self.degradationPreference.rawValue) as NSNumber
+                            videoSender?.parameters = params
+                        }
+                        
+                        // Start back camera capture
+                        if let backDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+                            videoCapturer.startCapture(with: backDevice, format: backDevice.activeFormat, fps: self.cameraSourceFPS)
+                            print("Fallback: Started back camera capture")
+                        }
                     }
                 } else {
                     print("Dual camera composite requires iOS 13.0 or later")

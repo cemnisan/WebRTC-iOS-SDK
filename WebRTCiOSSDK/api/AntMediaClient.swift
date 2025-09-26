@@ -409,7 +409,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             self.publishHandshakeSent = false
             // Wait for previous camera session to fully release hardware
             print("Allowing camera hardware release time before dual camera initialization...")
-            Thread.sleep(forTimeInterval: 0.5)
+            Thread.sleep(forTimeInterval: 1.0)
         } else {
             self.waitFirstFrameBeforePublish = false
             self.publishHandshakeSent = false

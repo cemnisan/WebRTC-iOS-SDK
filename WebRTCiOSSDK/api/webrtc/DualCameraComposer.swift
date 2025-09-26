@@ -214,24 +214,37 @@ class DualCameraComposer: NSObject {
             self.createPixelBufferPool(width: self.targetWidth, height: self.targetHeight)
 
             self.session.startRunning()
-            self.isRunning = true
             
-            // Wait a moment for session to stabilize and start producing frames
-            Thread.sleep(forTimeInterval: 0.2)
+            // Wait for session to actually start running
+            var attempts = 0
+            let maxAttempts = 10
+            while !self.session.isRunning && attempts < maxAttempts {
+                Thread.sleep(forTimeInterval: 0.1)
+                attempts += 1
+                print("DualCameraComposer waiting for session to start... attempt \(attempts)")
+            }
             
             // Check if session is actually running and producing data
-            print("DualCameraComposer session running: \(self.session.isRunning)")
+            print("DualCameraComposer session running: \(self.session.isRunning) after \(attempts) attempts")
             print("DualCameraComposer session inputs: \(self.session.inputs.count)")
             print("DualCameraComposer session outputs: \(self.session.outputs.count)")
             print("DualCameraComposer session connections: \(self.session.connections.count)")
+            
+            if !self.session.isRunning {
+                print("DualCameraComposer FAILED to start session - camera hardware may be locked by another session")
+                started = false
+                self.isStarting = false
+                return
+            }
             
             // Check connections are active
             for (index, connection) in self.session.connections.enumerated() {
                 print("DualCameraComposer connection \(index): enabled=\(connection.isEnabled), active=\(connection.isActive)")
             }
             
+            self.isRunning = true
             started = true
-            print("DualCameraComposer session started and stabilized")
+            print("DualCameraComposer session successfully started and running")
         } catch {
             print("DualCameraComposer start error: \(error)")
             started = false
