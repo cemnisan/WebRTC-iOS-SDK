@@ -944,6 +944,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         backContainer: UIView,
         mode: UIView.ContentMode = .scaleAspectFit
     ) {
+        // Clean up any existing dual preview renderers and views to avoid stacking
+        if #available(iOS 13.0, *) {
+            self.clearDualLocalViews(removeFromSuperview: true)
+        }
         // Create front camera local view
         #if arch(arm64)
         let frontRenderer = RTCMTLVideoView(frame: frontContainer.frame)
