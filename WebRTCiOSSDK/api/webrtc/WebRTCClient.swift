@@ -72,6 +72,12 @@ class WebRTCClient: NSObject {
     private var hasDeliveredFirstLocalFrame: Bool = false
     private var firstLocalFrameCallback: (() -> Void)?
     
+    // Public access to first frame status
+    @available(iOS 13.0, *)
+    public var hasDeliveredFirstFrame: Bool {
+        return hasDeliveredFirstLocalFrame
+    }
+    
     // Timer for sending timestamp messages
     private var timestampTimer: Timer?
     

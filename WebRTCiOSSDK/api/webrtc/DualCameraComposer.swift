@@ -110,6 +110,17 @@ class DualCameraComposer: NSObject {
                 return
             }
             
+            // Inspect available camera devices
+            let discoverySession = AVCaptureDevice.DiscoverySession(
+                deviceTypes: [.builtInWideAngleCamera],
+                mediaType: .video,
+                position: .unspecified
+            )
+            print("DualCameraComposer: Available camera devices:")
+            for device in discoverySession.devices {
+                print("  - \(device.localizedName) (\(device.position == .front ? "front" : device.position == .back ? "back" : "unknown")) - connected: \(device.isConnected)")
+            }
+            
             do {
                 self.session.beginConfiguration()
 
@@ -170,9 +181,13 @@ class DualCameraComposer: NSObject {
                 frontOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
                 if self.session.canAddOutput(frontOutput) {
                     self.session.addOutputWithNoConnections(frontOutput)
+                    print("DualCameraComposer: Front camera output added")
+                } else {
+                    print("DualCameraComposer: Cannot add front camera output")
                 }
                 self.frontOutput = frontOutput
                 frontOutput.setSampleBufferDelegate(self, queue: self.processingQueue)
+                print("DualCameraComposer: Front camera delegate set")
 
                 // Connect front input to front output
                 if let frontPort = frontInput.ports.first(where: { $0.mediaType == .video }) {
@@ -182,7 +197,12 @@ class DualCameraComposer: NSObject {
                     connection.isVideoMirrored = true
                     if self.session.canAddConnection(connection) {
                         self.session.addConnection(connection)
+                        print("DualCameraComposer: Front camera connection added")
+                    } else {
+                        print("DualCameraComposer: Cannot add front camera connection")
                     }
+                } else {
+                    print("DualCameraComposer: Cannot find front camera video port")
                 }
             } else {
                 print("Could not get front camera for composer")
@@ -198,6 +218,18 @@ class DualCameraComposer: NSObject {
             
             // Wait a moment for session to stabilize and start producing frames
             Thread.sleep(forTimeInterval: 0.2)
+            
+            // Check if session is actually running and producing data
+            print("DualCameraComposer session running: \(self.session.isRunning)")
+            print("DualCameraComposer session inputs: \(self.session.inputs.count)")
+            print("DualCameraComposer session outputs: \(self.session.outputs.count)")
+            print("DualCameraComposer session connections: \(self.session.connections.count)")
+            
+            // Check connections are active
+            for (index, connection) in self.session.connections.enumerated() {
+                print("DualCameraComposer connection \(index): enabled=\(connection.isEnabled), active=\(connection.isActive)")
+            }
+            
             started = true
             print("DualCameraComposer session started and stabilized")
         } catch {

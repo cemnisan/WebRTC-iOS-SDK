@@ -1102,13 +1102,24 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         if #available(iOS 13.0, *), cameraMode == .dualCamera, let client = self.webRTCClientMap[streamId] {
             if waitFirstFrameBeforePublish && !publishHandshakeSent {
                 print("Delaying publish handshake until first local frame is delivered")
-                client.onFirstLocalVideoFrame { [weak self] in
-                    guard let self = self else { return }
+                // Only register the callback if it hasn't been registered yet
+                if client.hasDeliveredFirstFrame {
+                    // First frame already delivered, send immediately
                     let jsonString = self.getHandshakeMessage(streamId: streamId, mode: AntMediaClientMode.publish, token: self.publishToken ?? "")
                     self.webSocket?.write(string: jsonString)
                     self.publishHandshakeSent = true
-                    print("Send Publish onConnection message (after first frame): \(jsonString)")
+                    print("Send Publish onConnection message (first frame already delivered): \(jsonString)")
                     self.dispatchQueue.asyncAfter(deadline: .now() + 5.0) { self.reconnectIfRequires() }
+                } else {
+                    // Register callback for when first frame arrives
+                    client.onFirstLocalVideoFrame { [weak self] in
+                        guard let self = self else { return }
+                        let jsonString = self.getHandshakeMessage(streamId: streamId, mode: AntMediaClientMode.publish, token: self.publishToken ?? "")
+                        self.webSocket?.write(string: jsonString)
+                        self.publishHandshakeSent = true
+                        print("Send Publish onConnection message (after first frame): \(jsonString)")
+                        self.dispatchQueue.asyncAfter(deadline: .now() + 5.0) { self.reconnectIfRequires() }
+                    }
                 }
                 return
             }
