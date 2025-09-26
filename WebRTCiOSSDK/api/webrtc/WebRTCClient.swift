@@ -924,21 +924,23 @@ class WebRTCClient: NSObject {
                         videoSender?.parameters = params
                     }
                     // Attach any pending composite renderers now that track exists
-                    for r in self.pendingCompositeRenderers { videoTrack.add(r) }
+                    print("Attaching \(self.pendingCompositeRenderers.count) pending composite renderers to track: \(videoTrack.trackId)")
+                    for r in self.pendingCompositeRenderers { 
+                        videoTrack.add(r) 
+                        print("Attached pending renderer to composite track")
+                    }
                     self.pendingCompositeRenderers.removeAll()
                     // Start composer which feeds frames into custom capturer
                     self._dualComposer = DualCameraComposer(targetWidth: self.targetWidth, targetHeight: self.targetHeight, fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
                         guard let self = self, let capturer = self.videoCapturer as? RTCCustomFrameCapturer else { return }
                         capturer.capture(pixelBuffer, rotation: ._0, timeStampNs: tsNs)
                     })
-                    // Delay the start slightly to ensure previous sessions are fully torn down
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-                        guard let self = self else { return }
-                        if self.dualComposer?.start() == true {
-                            print("Dual camera composer started")
-                        } else {
-                            print("Failed to start dual camera composer")
-                        }
+                    // Start immediately - we need frames before WebRTC negotiation
+                    if self.dualComposer?.start() == true {
+                        print("Dual camera composer started")
+                    } else {
+                        print("Failed to start dual camera composer")
+                        return false
                     }
                 } else {
                     print("Dual camera composite requires iOS 13.0 or later")
@@ -986,10 +988,10 @@ class WebRTCClient: NSObject {
     public func registerCompositeLocalRenderer(_ renderer: RTCVideoRenderer) {
         if let track = self.localVideoTrack {
             track.add(renderer)
-            print("Composite track attached to pending renderer immediately")
+            print("Composite track attached to pending renderer immediately - track: \(track.trackId)")
         } else {
             pendingCompositeRenderers.append(renderer)
-            print("Queued composite renderer until local track is ready")
+            print("Queued composite renderer until local track is ready - queue count: \(pendingCompositeRenderers.count)")
         }
     }
     

@@ -178,7 +178,11 @@ class DualCameraComposer: NSObject {
 
             self.session.startRunning()
             self.isRunning = true
+            
+            // Wait a moment for session to stabilize and start producing frames
+            Thread.sleep(forTimeInterval: 0.2)
             started = true
+            print("DualCameraComposer session started and stabilized")
         } catch {
             print("DualCameraComposer start error: \(error)")
             started = false
