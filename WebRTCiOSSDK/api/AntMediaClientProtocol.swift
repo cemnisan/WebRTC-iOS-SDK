@@ -165,6 +165,7 @@ public protocol AntMediaClientProtocol {
     
     func didZoomingBegan(_ pinch: UIPinchGestureRecognizer)
     
+    @available(iOS 15.0, *)
     func focus(
         with focusMode: AVCaptureDevice.FocusMode,
         exposureMode: AVCaptureDevice.ExposureMode,

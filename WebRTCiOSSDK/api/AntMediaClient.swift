@@ -722,6 +722,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      The method ensures the zoom does not exceed the camera’s limits.
      */
     // Source: https://stackoverflow.com/a/42928452/14445061
+    @available(iOS 13.0, *)
     public func didZoomingBegan(_ pinch: UIPinchGestureRecognizer) {
         guard let streamId = publisherStreamId,
               let stream = webRTCClientMap[streamId],
@@ -1053,7 +1054,6 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             self.rtcAudioSession.lockForConfiguration()
             
             do {
-                let category = mute ? AVAudioSession.Category.soloAmbient.rawValue : AVAudioSession.Category.playAndRecord.rawValue
                 
                 //try self.rtcAudioSession.setCategory(category)
                 // playAndRecord category defaults receiver to set to speaker
@@ -1072,6 +1072,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         }
     }
     
+    @available(iOS 15.0, *)
     open func focus(
         with focusMode: AVCaptureDevice.FocusMode,
         exposureMode: AVCaptureDevice.ExposureMode,
