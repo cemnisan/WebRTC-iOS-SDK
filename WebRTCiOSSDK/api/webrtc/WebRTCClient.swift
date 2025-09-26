@@ -139,19 +139,8 @@ class WebRTCClient: NSObject {
         switch mode {
         case .frontOnly:
             self.cameraPosition = .front
-            // Detach any composite-only renderers when leaving dual
-            if #available(iOS 13.0, *) {
-                if !pendingCompositeRenderers.isEmpty {
-                    pendingCompositeRenderers.removeAll()
-                }
-            }
         case .backOnly:
             self.cameraPosition = .back
-            if #available(iOS 13.0, *) {
-                if !pendingCompositeRenderers.isEmpty {
-                    pendingCompositeRenderers.removeAll()
-                }
-            }
         case .dualCamera:
             self.cameraPosition = .front // Default for dual camera
         }
@@ -1029,8 +1018,6 @@ class WebRTCClient: NSObject {
             print("Queued composite renderer until local track is ready - queue count: \(pendingCompositeRenderers.count)")
         }
     }
-
-    
 
     // Observe first local frame - composite only
     @available(iOS 13.0, *)

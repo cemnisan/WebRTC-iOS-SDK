@@ -185,6 +185,16 @@ class DualCameraComposer: NSObject {
                 backOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
                 if self.session.canAddOutput(backOutput) {
                     self.session.addOutputWithNoConnections(backOutput)
+                    
+                    // Configure video settings
+                    if backOutput.availableVideoPixelFormatTypes.contains(kCVPixelFormatType_Lossy_32BGRA) {
+                        backOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_Lossy_32BGRA)]
+                    } else if backOutput.availableVideoPixelFormatTypes.contains(kCVPixelFormatType_Lossless_32BGRA) {
+                        backOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_Lossless_32BGRA)]
+                    } else {
+                        backOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
+                    }
+                    
                     print("DualCameraComposer: Back camera output added")
                 } else {
                     print("DualCameraComposer: Cannot add back camera output")
@@ -285,12 +295,6 @@ class DualCameraComposer: NSObject {
                 print("DualCameraComposer waiting for session to start... attempt \(attempts)")
             }
             
-            // Check if session is actually running and producing data
-            print("DualCameraComposer session running: \(self.session.isRunning) after \(attempts) attempts")
-            print("DualCameraComposer session inputs: \(self.session.inputs.count)")
-            print("DualCameraComposer session outputs: \(self.session.outputs.count)")
-            print("DualCameraComposer session connections: \(self.session.connections.count)")
-            
             if !self.session.isRunning {
                 print("DualCameraComposer FAILED to start session - camera hardware may be locked by another session")
                 started = false
@@ -298,16 +302,9 @@ class DualCameraComposer: NSObject {
                 return
             }
             
-            // Check connections are active
-            for (index, connection) in self.session.connections.enumerated() {
-                print("DualCameraComposer connection \(index): enabled=\(connection.isEnabled), active=\(connection.isActive)")
-            }
-            
             self.isRunning = true
             started = true
-            print("DualCameraComposer session successfully started and running")
         } catch {
-            print("DualCameraComposer start error: \(error)")
             started = false
         }
             self.isStarting = false
@@ -455,11 +452,9 @@ extension DualCameraComposer: AVCaptureVideoDataOutputSampleBufferDelegate {
         // Ensure portrait orientation
         connection.videoOrientation = .portrait
         if output === backOutput {
-            print("DualCameraComposer: Received back camera frame")
             latestBackBuffer = sampleBuffer
             compositeAndSend()
         } else if output === frontOutput {
-            print("DualCameraComposer: Received front camera frame")
             latestFrontBuffer = sampleBuffer
         }
     }
