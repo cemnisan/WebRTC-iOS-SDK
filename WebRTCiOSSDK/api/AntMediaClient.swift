@@ -722,7 +722,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
      The method ensures the zoom does not exceed the camera’s limits.
      */
     // Source: https://stackoverflow.com/a/42928452/14445061
-    @available(iOS 13.0, *)
+    @available(iOS 15.0, *)
     public func didZoomingBegan(_ pinch: UIPinchGestureRecognizer) {
         guard let streamId = publisherStreamId,
               let stream = webRTCClientMap[streamId],

@@ -163,6 +163,7 @@ public protocol AntMediaClientProtocol {
      */
     func switchCamera()
     
+    @available(iOS 15.0, *)
     func didZoomingBegan(_ pinch: UIPinchGestureRecognizer)
     
     @available(iOS 15.0, *)
