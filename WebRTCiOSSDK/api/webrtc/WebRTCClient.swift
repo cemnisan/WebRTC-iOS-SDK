@@ -69,6 +69,8 @@ class WebRTCClient: NSObject {
     
     // Pending local renderers for composite dual-camera mode
     private var pendingCompositeRenderers: [RTCVideoRenderer] = []
+    private var hasDeliveredFirstLocalFrame: Bool = false
+    private var firstLocalFrameCallback: (() -> Void)?
     
     // Timer for sending timestamp messages
     private var timestampTimer: Timer?
@@ -934,6 +936,13 @@ class WebRTCClient: NSObject {
                     self._dualComposer = DualCameraComposer(targetWidth: self.targetWidth, targetHeight: self.targetHeight, fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
                         guard let self = self, let capturer = self.videoCapturer as? RTCCustomFrameCapturer else { return }
                         capturer.capture(pixelBuffer, rotation: ._0, timeStampNs: tsNs)
+                        if !self.hasDeliveredFirstLocalFrame {
+                            self.hasDeliveredFirstLocalFrame = true
+                            DispatchQueue.main.async { [weak self] in
+                                self?.firstLocalFrameCallback?()
+                                self?.firstLocalFrameCallback = nil
+                            }
+                        }
                     })
                     // Start immediately - we need frames before WebRTC negotiation
                     if self.dualComposer?.start() == true {
@@ -992,6 +1001,16 @@ class WebRTCClient: NSObject {
         } else {
             pendingCompositeRenderers.append(renderer)
             print("Queued composite renderer until local track is ready - queue count: \(pendingCompositeRenderers.count)")
+        }
+    }
+
+    // Observe first local frame - composite only
+    @available(iOS 13.0, *)
+    public func onFirstLocalVideoFrame(_ handler: @escaping () -> Void) {
+        self.firstLocalFrameCallback = handler
+        if hasDeliveredFirstLocalFrame {
+            handler()
+            self.firstLocalFrameCallback = nil
         }
     }
     

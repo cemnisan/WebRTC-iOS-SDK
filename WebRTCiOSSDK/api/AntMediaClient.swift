@@ -582,6 +582,11 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             }
             
             if self.mode != .play {
+                // If dual mode and we have pending views, pre-register them before adding stream
+                if #available(iOS 13.0, *), self.cameraMode == .dualCamera, let client = self.webRTCClientMap[id] {
+                    if let r = self.pendingDualFrontRenderer { client.registerCompositeLocalRenderer(r) }
+                    if let r = self.pendingDualBackRenderer { client.registerCompositeLocalRenderer(r) }
+                }
                 self.webRTCClientMap[id]?.addLocalMediaStream()
             }
                         
@@ -822,16 +827,17 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         AntMediaClient.embedView(backRenderer, into: backContainer)
         
         // Connect tracks to views
+        // Always keep references first; client may not exist yet if called before publish()
+        self.pendingDualFrontRenderer = frontRenderer
+        self.pendingDualBackRenderer = backRenderer
+        
         let streamId = getPublisherStreamId()
         if let client = webRTCClientMap[streamId] {
             if #available(iOS 13.0, *) {
                 if client.getCameraMode() == .dualCamera {
-                    // Register to attach when local track becomes ready
                     client.registerCompositeLocalRenderer(frontRenderer)
                     client.registerCompositeLocalRenderer(backRenderer)
-                    // Keep references in case we need to rebind after reconnection
-                    self.pendingDualFrontRenderer = frontRenderer
-                    self.pendingDualBackRenderer = backRenderer
+                    print("Registered composite renderers on existing client")
                 } else {
                     client.setLocalViewForCamera(.frontOnly, view: frontRenderer)
                     client.setLocalViewForCamera(.backOnly, view: backRenderer)
@@ -839,6 +845,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             } else {
                 client.setDualCameraViews(frontView: frontRenderer, backView: backRenderer)
             }
+        } else {
+            print("No client yet; stored dual local renderers for later binding")
         }
         
         print("Dual local views set successfully")
