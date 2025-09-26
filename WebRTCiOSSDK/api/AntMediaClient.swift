@@ -726,7 +726,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     public func didZoomingBegan(_ pinch: UIPinchGestureRecognizer) {
         guard let streamId = publisherStreamId,
               let stream = webRTCClientMap[streamId],
-              let device = self.cameraMode == .dualCamera ? (stream._dualComposer as? DualCameraComposer)?.backCameraDevice : stream._currentCaptureDevice else { return }
+              let device = self.cameraMode == .dualCamera ? stream.dualComposer?.backCameraDevice : stream._currentCaptureDevice else { return }
         
         // Return zoom value between the minimum and maximum zoom values
         func minMaxZoom(_ factor: CGFloat) -> CGFloat {

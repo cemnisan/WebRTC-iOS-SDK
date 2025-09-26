@@ -430,7 +430,6 @@ class DualCameraComposer: NSObject {
             self.context.render(composed, to: outPixel, bounds: CGRect(x: 0, y: 0, width: self.targetWidth, height: self.targetHeight), colorSpace: CGColorSpaceCreateDeviceRGB())
             CVPixelBufferUnlockBaseAddress(outPixel, [])
 
-            print("DualCameraComposer: Delivering composite frame to onFrame callback")
             self.onFrame(outPixel, tsNs)
         }
     }

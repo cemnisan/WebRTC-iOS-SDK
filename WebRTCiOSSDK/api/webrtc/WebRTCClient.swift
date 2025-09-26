@@ -53,7 +53,7 @@ class WebRTCClient: NSObject {
     
     // Composite dual camera (front over back) into single track
     @available(iOS 13.0, *)
-    private var dualComposer: DualCameraComposer? {
+    var dualComposer: DualCameraComposer? {
         return _dualComposer as? DualCameraComposer
     }
     
@@ -457,15 +457,12 @@ class WebRTCClient: NSObject {
         
         self.peerConnection?.offer(for: constraint, completionHandler: { sdp, error in
             if sdp?.type == RTCSdpType.offer {
-                print("Got your offer")
                 
                 self.peerConnection?.setLocalDescription(sdp!, completionHandler: { error in
                     if error != nil {
-                        print("Error (createOffer): " + error!.localizedDescription)
                     }
                 })
                 
-                print("offer sdp: " + sdp!.sdp)
                 var offerDict = [String: Any]()
                 
                 if self.token.isEmpty {
@@ -576,9 +573,6 @@ class WebRTCClient: NSObject {
         if let data = notif.data(using: .utf8) {
             sendData(data: data)
         }
-        
-        
-        print("Sent timestamp: \(ts)")
     }
     
     public func stopSendTimestamp() {
@@ -678,7 +672,7 @@ class WebRTCClient: NSObject {
     
     func setDefaultCameraZoomFactorIfNeeded() {
         if #available(iOS 15.0, *) {
-            guard let camera = _currentCaptureDevice else { return }
+            guard let camera = cameraMode == .dualCamera ? (dualComposer?.backCameraDevice) : _currentCaptureDevice else { return }
             
             if camera.deviceType == .builtInUltraWideCamera || camera.deviceType == .builtInTripleCamera {
                 do {
