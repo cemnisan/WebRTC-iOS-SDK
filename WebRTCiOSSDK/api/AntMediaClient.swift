@@ -57,6 +57,9 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     public weak var delegate: AntMediaClientDelegate?
 
     private var wsUrl: String!
+    // Pending local renderers for dual-camera composite mode
+    private var pendingDualFrontRenderer: RTCVideoRenderer?
+    private var pendingDualBackRenderer: RTCVideoRenderer?
     private var publisherStreamId: String?
     /**
      mainTrackId can also be used  the roomId of the conference
@@ -826,6 +829,9 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                     // Register to attach when local track becomes ready
                     client.registerCompositeLocalRenderer(frontRenderer)
                     client.registerCompositeLocalRenderer(backRenderer)
+                    // Keep references in case we need to rebind after reconnection
+                    self.pendingDualFrontRenderer = frontRenderer
+                    self.pendingDualBackRenderer = backRenderer
                 } else {
                     client.setLocalViewForCamera(.frontOnly, view: frontRenderer)
                     client.setLocalViewForCamera(.backOnly, view: backRenderer)
@@ -1580,6 +1586,14 @@ extension AntMediaClient: WebRTCClientDelegate {
     }
     
     public func addLocalStream(streamId: String) {
+        // Re-bind pending composite renderers on local stream start
+        if #available(iOS 13.0, *) {
+            if self.cameraMode == .dualCamera,
+               let client = self.webRTCClientMap[streamId] {
+                if let r = self.pendingDualFrontRenderer { client.registerCompositeLocalRenderer(r) }
+                if let r = self.pendingDualBackRenderer { client.registerCompositeLocalRenderer(r) }
+            }
+        }
         self.delegate?.localStreamStarted(streamId: streamId)
     }
     
