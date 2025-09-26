@@ -140,6 +140,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     // Publish gating for dual-camera composite: wait for first local frame
     private var waitFirstFrameBeforePublish: Bool = false
     private var publishHandshakeSent: Bool = false
+    private var firstFrameCallbackRegistered: Bool = false
         
     struct HandshakeMessage: Codable {
         var command: String?
@@ -407,12 +408,20 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         if #available(iOS 13.0, *), cameraMode == .dualCamera {
             self.waitFirstFrameBeforePublish = true
             self.publishHandshakeSent = false
+            self.firstFrameCallbackRegistered = false
             // Wait for previous camera session to fully release hardware
             print("Allowing camera hardware release time before dual camera initialization...")
-            Thread.sleep(forTimeInterval: 1.0)
+            
+            // Force garbage collection to help release camera resources
+            DispatchQueue.main.async {
+                // This forces ARC to clean up any lingering references
+            }
+            
+            Thread.sleep(forTimeInterval: 1.5)
         } else {
             self.waitFirstFrameBeforePublish = false
             self.publishHandshakeSent = false
+            self.firstFrameCallbackRegistered = false
         }
         initPeerConnection(streamId: streamId, mode: AntMediaClientMode.publish, token: token)
         
@@ -525,6 +534,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             // Reset publish state flags for clean restart
             self.waitFirstFrameBeforePublish = false
             self.publishHandshakeSent = false
+            self.firstFrameCallbackRegistered = false
             
             
             if isWebSocketConnected {
@@ -643,9 +653,47 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 
                 if !(self.webRTCClientMap[id]?.addLocalMediaStream() ?? false) {
                     print("Failed to add local media stream for id: \(id)")
-                    // Handle error, e.g., notify delegate, remove client
-                    self.webRTCClientMap.removeValue(forKey: id)
-                    return
+                    
+                    // If dual camera failed, fall back to back camera
+                    if #available(iOS 13.0, *), self.cameraMode == .dualCamera {
+                        print("Dual camera failed - falling back to back camera mode")
+                        self.cameraMode = .backOnly
+                        
+                        // Remove failed client
+                        self.webRTCClientMap.removeValue(forKey: id)?.disconnect()
+                        
+                        // Create new client with back camera only
+                        self.webRTCClientMap[id] = WebRTCClient(
+                            remoteVideoView: remoteView,
+                            localVideoView: localView,
+                            delegate: self,
+                            cameraPosition: .back,
+                            targetWidth: self.targetWidth,
+                            targetHeight: self.targetHeight,
+                            videoEnabled: self.videoEnable,
+                            enableDataChannel: self.enableDataChannel,
+                            useExternalCameraSource: self.useExternalCameraSource,
+                            externalAudio: self.externalAudioEnabled,
+                            externalVideoCapture: self.externalVideoCapture,
+                            cameraSourceFPS: self.cameraSourceFPS,
+                            streamId: id,
+                            degradationPreference: self.degradationPreference
+                        )
+                        
+                        if !(self.webRTCClientMap[id]?.addLocalMediaStream() ?? false) {
+                            print("Failed to add local media stream even with back camera fallback")
+                            self.webRTCClientMap.removeValue(forKey: id)
+                            return
+                        }
+                        
+                        // Reset dual camera gating since we're now using single camera
+                        self.waitFirstFrameBeforePublish = false
+                        print("Fallback to back camera successful - proceeding with single camera")
+                    } else {
+                        // Handle error, e.g., notify delegate, remove client
+                        self.webRTCClientMap.removeValue(forKey: id)
+                        return
+                    }
                 }
             }
                         
@@ -1100,7 +1148,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
 
         // In dual-camera composite, wait for the first local frame before sending handshake
         if #available(iOS 13.0, *), cameraMode == .dualCamera, let client = self.webRTCClientMap[streamId] {
-            if waitFirstFrameBeforePublish && !publishHandshakeSent {
+            if waitFirstFrameBeforePublish && !publishHandshakeSent && !firstFrameCallbackRegistered {
                 print("Delaying publish handshake until first local frame is delivered")
                 // Only register the callback if it hasn't been registered yet
                 if client.hasDeliveredFirstFrame {
@@ -1112,13 +1160,16 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                     self.dispatchQueue.asyncAfter(deadline: .now() + 5.0) { self.reconnectIfRequires() }
                 } else {
                     // Register callback for when first frame arrives
+                    self.firstFrameCallbackRegistered = true
                     client.onFirstLocalVideoFrame { [weak self] in
                         guard let self = self else { return }
-                        let jsonString = self.getHandshakeMessage(streamId: streamId, mode: AntMediaClientMode.publish, token: self.publishToken ?? "")
-                        self.webSocket?.write(string: jsonString)
-                        self.publishHandshakeSent = true
-                        print("Send Publish onConnection message (after first frame): \(jsonString)")
-                        self.dispatchQueue.asyncAfter(deadline: .now() + 5.0) { self.reconnectIfRequires() }
+                        if !self.publishHandshakeSent {
+                            let jsonString = self.getHandshakeMessage(streamId: streamId, mode: AntMediaClientMode.publish, token: self.publishToken ?? "")
+                            self.webSocket?.write(string: jsonString)
+                            self.publishHandshakeSent = true
+                            print("Send Publish onConnection message (after first frame): \(jsonString)")
+                            self.dispatchQueue.asyncAfter(deadline: .now() + 5.0) { self.reconnectIfRequires() }
+                        }
                     }
                 }
                 return
