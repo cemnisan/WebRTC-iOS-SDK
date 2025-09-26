@@ -136,6 +136,10 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     var disableTrackId: String?
     
     var reconnectIfRequiresScheduled: Bool = false
+    
+    // Publish gating for dual-camera composite: wait for first local frame
+    private var waitFirstFrameBeforePublish: Bool = false
+    private var publishHandshakeSent: Bool = false
         
     struct HandshakeMessage: Codable {
         var command: String?
@@ -399,6 +403,14 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         self.publisherStreamId = streamId
         // reset default webrtc audio configuation to capture audio and mic
         resetDefaultWebRTCAudioConfiguation()
+        // For dual-camera composite, wait for first frame before sending publish handshake
+        if #available(iOS 13.0, *), cameraMode == .dualCamera {
+            self.waitFirstFrameBeforePublish = true
+            self.publishHandshakeSent = false
+        } else {
+            self.waitFirstFrameBeforePublish = false
+            self.publishHandshakeSent = false
+        }
         initPeerConnection(streamId: streamId, mode: AntMediaClientMode.publish, token: token)
         
         if !mainTrackId.isEmpty {
@@ -1034,17 +1046,32 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     fileprivate func sendPublishCommand(_ streamId: String) {
-        if isWebSocketConnected {
-            let jsonString = getHandshakeMessage(streamId: streamId, mode: AntMediaClientMode.publish, token: self.publishToken ?? "")
-            webSocket?.write(string: jsonString)
-            print("Send Publish onConnection message: \(jsonString)")
-            // Add 3 seconds delay here and reconnectIfRequires has also 3 seconds delay
-            dispatchQueue.asyncAfter(deadline: .now() + 5.0) {
-                self.reconnectIfRequires()
-            }
-        } else {
+        if !isWebSocketConnected {
             print("Websocket is not connected to send Publish message for stream\(streamId)")
+            return
         }
+
+        // In dual-camera composite, wait for the first local frame before sending handshake
+        if #available(iOS 13.0, *), cameraMode == .dualCamera, let client = self.webRTCClientMap[streamId] {
+            if waitFirstFrameBeforePublish && !publishHandshakeSent {
+                print("Delaying publish handshake until first local frame is delivered")
+                client.onFirstLocalVideoFrame { [weak self] in
+                    guard let self = self else { return }
+                    let jsonString = self.getHandshakeMessage(streamId: streamId, mode: AntMediaClientMode.publish, token: self.publishToken ?? "")
+                    self.webSocket?.write(string: jsonString)
+                    self.publishHandshakeSent = true
+                    print("Send Publish onConnection message (after first frame): \(jsonString)")
+                    self.dispatchQueue.asyncAfter(deadline: .now() + 5.0) { self.reconnectIfRequires() }
+                }
+                return
+            }
+        }
+
+        let jsonString = getHandshakeMessage(streamId: streamId, mode: AntMediaClientMode.publish, token: self.publishToken ?? "")
+        webSocket?.write(string: jsonString)
+        publishHandshakeSent = true
+        print("Send Publish onConnection message: \(jsonString)")
+        dispatchQueue.asyncAfter(deadline: .now() + 5.0) { self.reconnectIfRequires() }
     }
     
     func sendJoinConferenceCommand() {
