@@ -850,73 +850,16 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     /// Set dual camera mode for WebRTC client
     @available(iOS 15.0, *)
     open func setCameraMode(_ mode: CameraMode) {
-        let previousMode = self.cameraMode
         self.cameraMode = mode
-        
-        // If leaving dual camera mode, detach and remove dual local preview views
-        if previousMode == .dualCamera && mode != .dualCamera {
-            self.clearDualLocalViews()
-        }
         
         // Update all existing WebRTC clients
         for (_, client) in webRTCClientMap {
             client.setCameraMode(mode)
         }
         
-        // If entering dual camera mode and we have known containers, auto recreate previews
-        if mode == .dualCamera {
-            if let frontC = self.pendingDualFrontContainer, let backC = self.pendingDualBackContainer {
-                let contentMode = self.videoContentMode ?? .scaleAspectFit
-                self.setDualLocalViews(frontContainer: frontC, backContainer: backC, mode: contentMode)
-            }
-        }
+        
         
         print("Camera mode set to: \(mode)")
-    }
-
-    // Remove dual camera local preview renderers and detach them from the track
-    @available(iOS 13.0, *)
-    private func clearDualLocalViews(removeFromSuperview: Bool = true) {
-        let streamId = getPublisherStreamId()
-        if let client = webRTCClientMap[streamId] {
-            if let track = client.getLocalVideoTrackIfAvailable() {
-                if let r = self.pendingDualFrontRenderer {
-                    track.remove(r)
-                }
-                if let r = self.pendingDualBackRenderer {
-                    track.remove(r)
-                }
-            }
-            // Also ensure removal from client's pending list (if not yet attached)
-            if let r = self.pendingDualFrontRenderer {
-                client.removeCompositeLocalRenderer(r)
-            }
-            if let r = self.pendingDualBackRenderer {
-                client.removeCompositeLocalRenderer(r)
-            }
-        }
-        if removeFromSuperview {
-            let removeBlock = {
-                if let v = self.pendingDualFrontRenderer as? UIView { v.removeFromSuperview() }
-                if let v = self.pendingDualBackRenderer as? UIView { v.removeFromSuperview() }
-                // Sweep containers for any RTC video views left behind
-                if let frontC = self.pendingDualFrontContainer {
-                    frontC.subviews
-                        .filter { String(describing: type(of: $0)).contains("RTCMTLVideoView") || String(describing: type(of: $0)).contains("RTCEAGLVideoView") }
-                        .forEach { $0.removeFromSuperview() }
-                }
-                if let backC = self.pendingDualBackContainer {
-                    backC.subviews
-                        .filter { String(describing: type(of: $0)).contains("RTCMTLVideoView") || String(describing: type(of: $0)).contains("RTCEAGLVideoView") }
-                        .forEach { $0.removeFromSuperview() }
-                }
-            }
-            if Thread.isMainThread { removeBlock() } else { DispatchQueue.main.sync { removeBlock() } }
-        }
-        self.pendingDualFrontRenderer = nil
-        self.pendingDualBackRenderer = nil
-        // Keep container references cached so we can auto recreate on next dual
-        print("Cleared dual local views and detached from track")
     }
     
     /// Get current camera mode
@@ -974,14 +917,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         backContainer: UIView,
         mode: UIView.ContentMode = .scaleAspectFit
     ) {
-        // Clean up any existing dual preview renderers and views to avoid stacking
-        if #available(iOS 13.0, *) {
-            self.clearDualLocalViews(removeFromSuperview: true)
-        }
-        // Track containers for robust cleanup
-        self.pendingDualFrontContainer = frontContainer
-        self.pendingDualBackContainer = backContainer
-        self.videoContentMode = mode
+        
         // Create front camera local view
         #if arch(arm64)
         let frontRenderer = RTCMTLVideoView(frame: frontContainer.frame)
