@@ -844,7 +844,13 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     /// Set dual camera mode for WebRTC client
     @available(iOS 15.0, *)
     open func setCameraMode(_ mode: CameraMode) {
+        let previousMode = self.cameraMode
         self.cameraMode = mode
+        
+        // If leaving dual camera mode, detach and remove dual local preview views
+        if previousMode == .dualCamera && mode != .dualCamera {
+            self.clearDualLocalViews()
+        }
         
         // Update all existing WebRTC clients
         for (_, client) in webRTCClientMap {
@@ -852,6 +858,31 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         }
         
         print("Camera mode set to: \(mode)")
+    }
+
+    // Remove dual camera local preview renderers and detach them from the track
+    @available(iOS 13.0, *)
+    private func clearDualLocalViews(removeFromSuperview: Bool = true) {
+        let streamId = getPublisherStreamId()
+        if let client = webRTCClientMap[streamId] {
+            if let track = client.getLocalVideoTrackIfAvailable() {
+                if let r = self.pendingDualFrontRenderer {
+                    track.remove(r)
+                }
+                if let r = self.pendingDualBackRenderer {
+                    track.remove(r)
+                }
+            }
+        }
+        if removeFromSuperview {
+            DispatchQueue.main.async {
+                if let v = self.pendingDualFrontRenderer as? UIView { v.removeFromSuperview() }
+                if let v = self.pendingDualBackRenderer as? UIView { v.removeFromSuperview() }
+            }
+        }
+        self.pendingDualFrontRenderer = nil
+        self.pendingDualBackRenderer = nil
+        print("Cleared dual local views and detached from track")
     }
     
     /// Get current camera mode

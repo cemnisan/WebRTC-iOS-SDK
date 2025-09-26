@@ -1019,6 +1019,21 @@ class WebRTCClient: NSObject {
         }
     }
 
+    // Detach previously attached composite renderers when leaving dual mode
+    @available(iOS 13.0, *)
+    public func removeCompositeLocalRenderer(_ renderer: RTCVideoRenderer) {
+        if let track = self.localVideoTrack {
+            track.remove(renderer)
+            print("Composite renderer removed from track: \(track.trackId)")
+        } else {
+            // If not attached yet, remove from pending list
+            if let idx = pendingCompositeRenderers.firstIndex(where: { $0 as AnyObject === renderer as AnyObject }) {
+                pendingCompositeRenderers.remove(at: idx)
+                print("Composite renderer removed from pending queue")
+            }
+        }
+    }
+
     // Observe first local frame - composite only
     @available(iOS 13.0, *)
     public func onFirstLocalVideoFrame(_ handler: @escaping () -> Void) {
