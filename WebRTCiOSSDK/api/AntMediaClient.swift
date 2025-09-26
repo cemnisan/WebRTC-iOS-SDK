@@ -60,6 +60,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     // Pending local renderers for dual-camera composite mode
     private var pendingDualFrontRenderer: RTCVideoRenderer?
     private var pendingDualBackRenderer: RTCVideoRenderer?
+    private weak var pendingDualFrontContainer: UIView?
+    private weak var pendingDualBackContainer: UIView?
     private var publisherStreamId: String?
     /**
      mainTrackId can also be used  the roomId of the conference
@@ -877,15 +879,35 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                     track.remove(r)
                 }
             }
+            // Also ensure removal from client's pending list (if not yet attached)
+            if let r = self.pendingDualFrontRenderer {
+                client.removeCompositeLocalRenderer(r)
+            }
+            if let r = self.pendingDualBackRenderer {
+                client.removeCompositeLocalRenderer(r)
+            }
         }
         if removeFromSuperview {
             DispatchQueue.main.async {
                 if let v = self.pendingDualFrontRenderer as? UIView { v.removeFromSuperview() }
                 if let v = self.pendingDualBackRenderer as? UIView { v.removeFromSuperview() }
+                // Sweep containers for any RTC video views left behind
+                if let frontC = self.pendingDualFrontContainer {
+                    frontC.subviews
+                        .filter { String(describing: type(of: $0)).contains("RTCMTLVideoView") || String(describing: type(of: $0)).contains("RTCEAGLVideoView") }
+                        .forEach { $0.removeFromSuperview() }
+                }
+                if let backC = self.pendingDualBackContainer {
+                    backC.subviews
+                        .filter { String(describing: type(of: $0)).contains("RTCMTLVideoView") || String(describing: type(of: $0)).contains("RTCEAGLVideoView") }
+                        .forEach { $0.removeFromSuperview() }
+                }
             }
         }
         self.pendingDualFrontRenderer = nil
         self.pendingDualBackRenderer = nil
+        self.pendingDualFrontContainer = nil
+        self.pendingDualBackContainer = nil
         print("Cleared dual local views and detached from track")
     }
     
@@ -948,6 +970,9 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         if #available(iOS 13.0, *) {
             self.clearDualLocalViews(removeFromSuperview: true)
         }
+        // Track containers for robust cleanup
+        self.pendingDualFrontContainer = frontContainer
+        self.pendingDualBackContainer = backContainer
         // Create front camera local view
         #if arch(arm64)
         let frontRenderer = RTCMTLVideoView(frame: frontContainer.frame)
