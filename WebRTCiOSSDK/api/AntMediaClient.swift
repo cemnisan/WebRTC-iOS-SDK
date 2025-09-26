@@ -808,6 +808,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
         
     open func setLocalView(container: UIView, mode: UIView.ContentMode = .scaleAspectFit) {
+        // Remove previous renderer view if exists to prevent stacking
+        if let old = self.localView as? UIView { old.removeFromSuperview() }
         #if arch(arm64)
         let localRenderer = RTCMTLVideoView(frame: container.frame)
         localRenderer.videoContentMode = mode
@@ -824,6 +826,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
     }
     
     open func setRemoteView(remoteContainer: UIView, mode: UIView.ContentMode = .scaleAspectFit) {
+        // Remove previous renderer view if exists to prevent stacking
+        if let old = self.remoteView as? UIView { old.removeFromSuperview() }
         #if arch(arm64)
         let remoteRenderer = RTCMTLVideoView(frame: remoteContainer.frame)
         remoteRenderer.videoContentMode = mode
