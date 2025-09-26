@@ -115,9 +115,13 @@ class DualCameraComposer: NSObject {
 
             // Configure back camera (background)
             if let backDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+                print("DualCameraComposer: Back camera device found: \(backDevice.localizedName)")
                 let backInput = try AVCaptureDeviceInput(device: backDevice)
                 if self.session.canAddInput(backInput) {
                     self.session.addInputWithNoConnections(backInput)
+                    print("DualCameraComposer: Back camera input added")
+                } else {
+                    print("DualCameraComposer: Cannot add back camera input")
                 }
 
                 let backOutput = AVCaptureVideoDataOutput()
@@ -125,9 +129,13 @@ class DualCameraComposer: NSObject {
                 backOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
                 if self.session.canAddOutput(backOutput) {
                     self.session.addOutputWithNoConnections(backOutput)
+                    print("DualCameraComposer: Back camera output added")
+                } else {
+                    print("DualCameraComposer: Cannot add back camera output")
                 }
                 self.backOutput = backOutput
                 backOutput.setSampleBufferDelegate(self, queue: self.processingQueue)
+                print("DualCameraComposer: Back camera delegate set")
 
                 // Connect back input to back output
                 if let backPort = backInput.ports.first(where: { $0.mediaType == .video }) {
@@ -135,7 +143,12 @@ class DualCameraComposer: NSObject {
                     connection.videoOrientation = .portrait
                     if self.session.canAddConnection(connection) {
                         self.session.addConnection(connection)
+                        print("DualCameraComposer: Back camera connection added")
+                    } else {
+                        print("DualCameraComposer: Cannot add back camera connection")
                     }
+                } else {
+                    print("DualCameraComposer: Cannot find back camera video port")
                 }
             } else {
                 print("Could not get back camera for composer")
@@ -143,9 +156,13 @@ class DualCameraComposer: NSObject {
 
             // Configure front camera (overlay)
             if let frontDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
+                print("DualCameraComposer: Front camera device found: \(frontDevice.localizedName)")
                 let frontInput = try AVCaptureDeviceInput(device: frontDevice)
                 if self.session.canAddInput(frontInput) {
                     self.session.addInputWithNoConnections(frontInput)
+                    print("DualCameraComposer: Front camera input added")
+                } else {
+                    print("DualCameraComposer: Cannot add front camera input")
                 }
 
                 let frontOutput = AVCaptureVideoDataOutput()
@@ -302,6 +319,7 @@ class DualCameraComposer: NSObject {
             self.context.render(composed, to: outPixel, bounds: CGRect(x: 0, y: 0, width: self.targetWidth, height: self.targetHeight), colorSpace: CGColorSpaceCreateDeviceRGB())
             CVPixelBufferUnlockBaseAddress(outPixel, [])
 
+            print("DualCameraComposer: Delivering composite frame to onFrame callback")
             self.onFrame(outPixel, tsNs)
         }
     }
@@ -331,9 +349,11 @@ extension DualCameraComposer: AVCaptureVideoDataOutputSampleBufferDelegate {
         // Ensure portrait orientation
         connection.videoOrientation = .portrait
         if output === backOutput {
+            print("DualCameraComposer: Received back camera frame")
             latestBackBuffer = sampleBuffer
             compositeAndSend()
         } else if output === frontOutput {
+            print("DualCameraComposer: Received front camera frame")
             latestFrontBuffer = sampleBuffer
         }
     }

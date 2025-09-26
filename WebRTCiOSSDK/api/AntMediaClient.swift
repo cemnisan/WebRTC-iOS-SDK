@@ -407,6 +407,9 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         if #available(iOS 13.0, *), cameraMode == .dualCamera {
             self.waitFirstFrameBeforePublish = true
             self.publishHandshakeSent = false
+            // Wait for previous camera session to fully release hardware
+            print("Allowing camera hardware release time before dual camera initialization...")
+            Thread.sleep(forTimeInterval: 0.5)
         } else {
             self.waitFirstFrameBeforePublish = false
             self.publishHandshakeSent = false
@@ -523,6 +526,7 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
             self.waitFirstFrameBeforePublish = false
             self.publishHandshakeSent = false
             
+            
             if isWebSocketConnected {
                 let command = [
                     COMMAND: "stop",
@@ -623,6 +627,15 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                                     print("First local frame delivered, sending delayed publish handshake")
                                     self.sendPublishCommand(id)
                                 }
+                            }
+                        }
+                        
+                        // Fallback timeout in case frames never arrive
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+                            guard let self = self else { return }
+                            if !self.publishHandshakeSent {
+                                print("Timeout waiting for first frame - sending publish handshake anyway")
+                                self.sendPublishCommand(id)
                             }
                         }
                     }
