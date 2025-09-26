@@ -521,7 +521,13 @@ class WebRTCClient: NSObject {
         if #available(iOS 13.0, *) {
             dualComposer?.stop()
             _dualComposer = nil
+            // Reset first frame tracking
+            hasDeliveredFirstLocalFrame = false
+            firstLocalFrameCallback = nil
         }
+        
+        // Clear pending renderers
+        pendingCompositeRenderers.removeAll()
         
         self.videoCapturer = nil
         

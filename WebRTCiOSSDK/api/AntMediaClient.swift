@@ -513,7 +513,15 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         } else {
             // removing means that user requests to stop
             unregisterStatsListener(streamId: tmpStreamId)
-            self.webRTCClientMap.removeValue(forKey: tmpStreamId)?.disconnect()
+            // Ensure immediate cleanup without race conditions
+            if let client = self.webRTCClientMap.removeValue(forKey: tmpStreamId) {
+                client.disconnect()
+                print("Client removed from map and disconnected for \(tmpStreamId)")
+            }
+            
+            // Reset publish state flags for clean restart
+            self.waitFirstFrameBeforePublish = false
+            self.publishHandshakeSent = false
             
             if isWebSocketConnected {
                 let command = [
@@ -537,8 +545,15 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         
         let id = getStreamId(streamId)
         
+        // Ensure any existing client is fully cleaned up before creating new one
+        if let existingClient = self.webRTCClientMap[id] {
+            print("Warning: Client already exists for \(id), cleaning up first")
+            existingClient.disconnect()
+            self.webRTCClientMap.removeValue(forKey: id)
+        }
+        
         if self.webRTCClientMap[id] == nil {
-            print("Has wsClient? (start) : \(String(describing: self.webRTCClientMap[id]))")
+            print("Creating new WebRTC client for \(id)")
             
             // Create WebRTC client with appropriate camera mode
             if cameraMode == .dualCamera {
@@ -598,8 +613,27 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
                 if #available(iOS 13.0, *), self.cameraMode == .dualCamera, let client = self.webRTCClientMap[id] {
                     if let r = self.pendingDualFrontRenderer { client.registerCompositeLocalRenderer(r) }
                     if let r = self.pendingDualBackRenderer { client.registerCompositeLocalRenderer(r) }
+                    
+                    // Register first frame callback to trigger publish handshake
+                    if self.waitFirstFrameBeforePublish && !self.publishHandshakeSent {
+                        client.onFirstLocalVideoFrame { [weak self] in
+                            guard let self = self else { return }
+                            DispatchQueue.main.async {
+                                if !self.publishHandshakeSent {
+                                    print("First local frame delivered, sending delayed publish handshake")
+                                    self.sendPublishCommand(id)
+                                }
+                            }
+                        }
+                    }
                 }
-                self.webRTCClientMap[id]?.addLocalMediaStream()
+                
+                if !(self.webRTCClientMap[id]?.addLocalMediaStream() ?? false) {
+                    print("Failed to add local media stream for id: \(id)")
+                    // Handle error, e.g., notify delegate, remove client
+                    self.webRTCClientMap.removeValue(forKey: id)
+                    return
+                }
             }
                         
             self.webRTCClientMap[id]?.setToken(token)
