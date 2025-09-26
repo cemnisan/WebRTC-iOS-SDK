@@ -20,6 +20,7 @@ class DualCameraComposer: NSObject {
 
     private var frontOutput: AVCaptureVideoDataOutput?
     private var backOutput: AVCaptureVideoDataOutput?
+    var backCameraDevice: AVCaptureDevice?
 
     private var latestFrontBuffer: CMSampleBuffer?
     private var latestBackBuffer: CMSampleBuffer?
@@ -29,7 +30,12 @@ class DualCameraComposer: NSObject {
     private var fps: Int
     private var isRunning: Bool = false
     private var isStarting: Bool = false
-
+    
+    // MARK: - Zooming (Back Camera Only)
+    private var minimumZoom: CGFloat = 1.0
+    private var maximumZoom: CGFloat = 15.0
+    private var lastZoomFactor: CGFloat = 1.0
+    
     private var pixelBufferPool: CVPixelBufferPool?
 
     // PiP layout configuration (dynamic, screen-size independent)
@@ -156,6 +162,8 @@ class DualCameraComposer: NSObject {
             // Configure back camera (background)
             if let backDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
                 print("DualCameraComposer: Back camera device found: \(backDevice.localizedName)")
+                self.backCameraDevice = backDevice
+                
                 // Configure active format and fps suitable for MultiCam
                 if let chosen = selectMultiCamFormat(for: backDevice, preferredWidth: 640, preferredHeight: 480, targetFps: self.fps) {
                     do {

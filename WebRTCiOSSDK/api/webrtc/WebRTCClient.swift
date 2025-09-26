@@ -57,7 +57,7 @@ class WebRTCClient: NSObject {
         return _dualComposer as? DualCameraComposer
     }
     
-    private var _dualComposer: Any?
+    var _dualComposer: Any?
     
     private var token: String!
     private var streamId: String!
