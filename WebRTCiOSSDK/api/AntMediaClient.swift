@@ -943,6 +943,8 @@ open class AntMediaClient: NSObject, AntMediaClientProtocol {
         backRenderer.frame = backContainer.bounds
         AntMediaClient.embedView(backRenderer, into: backContainer)
         
+        print("heyllo,", backContainer.frame, backRenderer.frame, backContainer.bounds)
+        
         // Connect tracks to views
         // Always keep references first; client may not exist yet if called before publish()
         self.pendingDualFrontRenderer = frontRenderer
