@@ -57,7 +57,7 @@ class DualCameraComposer: NSObject {
     private let onFrame: (_ pixelBuffer: CVPixelBuffer, _ timestampNs: Int64) -> Void
 
     // Select a low-cost format that supports MultiCam and target fps
-    private func selectMultiCamFormat(for device: AVCaptureDevice, preferredWidth: Int = 640, preferredHeight: Int = 480, targetFps: Int) -> (format: AVCaptureDevice.Format, fps: Int)? {
+    private func selectMultiCamFormat(for device: AVCaptureDevice, preferredWidth: Int = 1280, preferredHeight: Int = 720, targetFps: Int) -> (format: AVCaptureDevice.Format, fps: Int)? {
         var candidates: [(AVCaptureDevice.Format, Int, Int, Int)] = [] // (format, width, height, maxFps)
         for format in device.formats {
             guard format.isMultiCamSupported else { continue }
@@ -165,7 +165,7 @@ class DualCameraComposer: NSObject {
                 self.backCameraDevice = backDevice
                 
                 // Configure active format and fps suitable for MultiCam
-                if let chosen = selectMultiCamFormat(for: backDevice, preferredWidth: 640, preferredHeight: 480, targetFps: self.fps) {
+                if let chosen = selectMultiCamFormat(for: backDevice, preferredWidth: 1280, preferredHeight: 720, targetFps: self.fps) {
                     do {
                         try backDevice.lockForConfiguration()
                         backDevice.activeFormat = chosen.format
@@ -232,7 +232,7 @@ class DualCameraComposer: NSObject {
             if let frontDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
                 print("DualCameraComposer: Front camera device found: \(frontDevice.localizedName)")
                 // Configure active format and fps suitable for MultiCam
-                if let chosen = selectMultiCamFormat(for: frontDevice, preferredWidth: 640, preferredHeight: 480, targetFps: self.fps) {
+                if let chosen = selectMultiCamFormat(for: frontDevice, preferredWidth: 1280, preferredHeight: 720, targetFps: self.fps) {
                     do {
                         try frontDevice.lockForConfiguration()
                         frontDevice.activeFormat = chosen.format

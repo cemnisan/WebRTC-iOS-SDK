@@ -357,7 +357,6 @@ class WebRTCClient: NSObject {
 
     func renderRemoteVideo(to renderer: RTCVideoRenderer) {
         // Make sure you have already initialized the remoteVideoTrack from the WebRTC video call.
-
         if frameRenderer == nil {
             frameRenderer = FrameRenderer(uID: 1)
         }
