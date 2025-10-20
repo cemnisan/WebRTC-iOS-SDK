@@ -939,7 +939,7 @@ class WebRTCClient: NSObject {
                     }
                     self.pendingCompositeRenderers.removeAll()
                     // Start composer which feeds frames into custom capturer
-                    self._dualComposer = DualCameraComposer(targetWidth: self.targetWidth, targetHeight: self.targetHeight, fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
+                    self._dualComposer = DualCameraComposer(targetWidth: Int(UIScreen.main.bounds.width), targetHeight: Int(UIScreen.main.bounds.height), fps: self.cameraSourceFPS, onFrame: { [weak self] pixelBuffer, tsNs in
                         guard let self = self, let capturer = self.videoCapturer as? RTCCustomFrameCapturer else { return }
                         capturer.capture(pixelBuffer, rotation: ._0, timeStampNs: tsNs)
                         if !self.hasDeliveredFirstLocalFrame {
